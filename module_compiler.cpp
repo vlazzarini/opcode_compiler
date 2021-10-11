@@ -131,7 +131,7 @@ struct dataspace {
   STRINGDAT *code;
 };
 
-int opcode_compile(CSOUND *csound, dataspace *p) {
+int module_compile(CSOUND *csound, dataspace *p) {
   char *code = p->code->data;
   const char *temp_directory = std::getenv("TMPDIR");
   if (temp_directory == nullptr) temp_directory = "/tmp";
@@ -242,8 +242,8 @@ int opcode_compile(CSOUND *csound, dataspace *p) {
 #define S(x)    sizeof(x)
 
 static OENTRY localops[] = {
-  {(char *) "opcode_compile", S(dataspace), 0, 1, (char *)"i",(char *) "S",
-   (SUBR)opcode_compile, NULL, NULL }
+  {(char *) "module_compile", S(dataspace), 0, 1, (char *)"i",(char *) "S",
+   (SUBR)module_compile, NULL, NULL }
 };
 
 LINKAGE_BUILTIN(localops)

@@ -1,12 +1,13 @@
-Csound JIT Opcode Compiler
+Csound JIT Module Compiler
 ============
 
 This experimental opcode builds on the initial work by Michael Goggins, and is based on the
-llvm/clang interpreter example code. It provides a just-in-time C compiler for Csound opcodes.
-The opcode syntax is
+llvm/clang interpreter example code. It provides a just-in-time C
+module compiler, which can be used to add new opcodes to Csound on-the-fly.
+The module compiler syntax is
 
 ```
-ires opcode_compile Scode
+ires module_compile Scode
 ```
 
 where `Scode` is a C-language module containing the opcodes to be added to the system,
@@ -57,7 +58,7 @@ code itself, it is only available to instruments in subsequent compilations.
 
 The orchestra code is composed of two opcode calls:
 
-- to `opcode_compile` adding the new opcode
+- to `module_compile` adding the new opcode
 - to `compilestr` compiling the Csound code that uses this opcode.
 
 The C code is given as a string to `opcode_compile` using the `{{ }}` multiline
@@ -98,7 +99,7 @@ SCode = {{
  };
  }}
 
-ires= opcode_compile(SCode)
+ires= module_compile(SCode)
 ```
 
 This compiles the new opcode (`amp`) using the JIT compiler and executes the `module_init` function to add

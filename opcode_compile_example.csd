@@ -48,7 +48,7 @@ SCscode = {{
 }}
 
 
-ires = opcode_compile(SCode)
+ires = module_compile(SCode)
 ires = compilestr(SCscode)
 
 </CsInstruments>

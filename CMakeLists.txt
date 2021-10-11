@@ -286,8 +286,8 @@ add_definitions(${CLANG_DEFINITIONS_LIST})
 
 link_directories("/usr/local/lib")
 find_program(LLVMCONFIG llvm-config HINTS /usr/bin /usr/local/bin /usr/local/opt/llvm/bin)
-make_plugin(opcode_compile opcode_compile.cpp)
-target_include_directories(opcode_compile PRIVATE
+make_plugin(module_compiler module_compiler.cpp)
+target_include_directories(module_compiler PRIVATE
 ${CSOUND_INCLUDE_DIRS})
 exec_program(${LLVMCONFIG} ARGS --libs  OUTPUT_VARIABLE
 llvm_libs)
@@ -295,5 +295,5 @@ exec_program(${LLVMCONFIG} ARGS --system-libs OUTPUT_VARIABLE
 llvm_sys_libs)
 
 set(clang_libs "-lclangTooling -lclangFrontendTool -lclangFrontend -lclangDriver -lclangSerialization -lclangCodeGen -lclangParse -lclangSema -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCheckers -lclangStaticAnalyzerCore -lclangAnalysis -lclangARCMigrate -lclangRewrite -lclangRewriteFrontend -lclangEdit -lclangAST -lclangASTMatchers -lclangLex -lclangBasic -lclang")
-target_link_libraries(opcode_compile ${clang_libs} ${llvm_sys_libs}  ${llvm_libs})
-target_compile_options(opcode_compile PRIVATE "-std=c++17")
+target_link_libraries(module_compiler ${clang_libs} ${llvm_sys_libs}  ${llvm_libs})
+target_compile_options(module_compiler PRIVATE "-std=c++17")
