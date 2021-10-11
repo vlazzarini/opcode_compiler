@@ -9,8 +9,8 @@ The opcode syntax is
 ires opcode_compile Scode
 ```
 
-where Scode is a C-language module containing the opcodes to be added to the system.
-This uses the C API for opcodes, and it should contain an entry point declared as
+where `Scode` is a C-language module containing the opcodes to be added to the system,
+provided as a string. This uses the C API for opcodes, and it should contain an entry point declared as
 
 ```
 extern "C" int module_init(CSOUND *csound); 
@@ -118,5 +118,5 @@ ires = compilestr(SCscode)
 
 At the moment, only C opcodes are possible, but support for C++ opcodes will be added soon.
 
-Victor Lazzarini
+Victor Lazzarini  
 October 2021
