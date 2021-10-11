@@ -1,5 +1,5 @@
 Csound JIT Opcode Compiler
------------------------
+============
 
 This experimental opcode builds on the initial work by Michael Goggins, and is based on the
 llvm/clang interpreter example code. It provides a just-in-time C compiler for Csound opcodes.
@@ -29,7 +29,7 @@ int csound::AppendOpcode(CSOUND *, const char *opname,
 
 
 Building
-=====
+------
 
 The opcodes require LLVM and Clang libraries, version >= 13.0.0, to be installed from
 https://github.com/llvm/llvm-project, as well as Csound and CMake. With these in place,
@@ -49,7 +49,7 @@ make install
 ```
 
 Example
-=========
+------
 
 The following is a simple example (from opcode_compile_example.csd) creating a simple gain opcode and
 adding it to Csound. Note that since the opcode compiler adds the opcode to the system from the Csound
