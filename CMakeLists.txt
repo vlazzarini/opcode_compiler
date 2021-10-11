@@ -36,14 +36,6 @@ include(CheckFunctionExists)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 
-### COMPILER OPTIMIZATION FLAGS
-option(USE_COMPILER_OPTIMIZATIONS "Use the default Csound compiler optimization flags" ON)
-if(USE_COMPILER_OPTIMIZATIONS)
-    include(${CMAKE_SOURCE_DIR}/cmake/CompilerOptimizations.cmake)
-endif()
-
-##/Library/Frameworks/CsoundLib64.framework/Versions/Current/Resources/Opcodes64
-
 if(APPLE)
      message(STATUS "Building on OSX")
     set(OSX_VERSION " ")
