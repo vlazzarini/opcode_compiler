@@ -2,7 +2,7 @@ Csound JIT Module Compiler
 ============
 
 This experimental opcode builds on the initial work by Michael Goggins, and is based on the
-llvm/clang interpreter example code. It provides a just-in-time C
+llvm/clang interpreter example code. It provides a just-in-time C/C++
 module compiler, which can be used to add new opcodes to Csound on-the-fly.
 The module compiler syntax is
 
@@ -10,7 +10,7 @@ The module compiler syntax is
 ires module_compile Scode
 ```
 
-where `Scode` is a C-language module containing the opcodes to be added to the system,
+where `Scode` is a C/C++-language module containing the opcodes to be added to the system,
 provided as a string. This uses the C API for opcodes, and it should contain an entry point declared as
 
 ```
@@ -52,7 +52,7 @@ make install
 Example
 ------
 
-The following is a simple example (from opcode_compile_example.csd) creating a simple gain opcode and
+The following is a simple example (from ` examples/opcode_compile_example.csd`) creating a simple gain opcode and
 adding it to Csound. Note that since the opcode compiler adds the opcode to the system from the Csound
 code itself, it is only available to instruments in subsequent compilations.
 
@@ -117,7 +117,8 @@ SCscode = {{
 ires = compilestr(SCscode)
 ```
 
-At the moment, only C opcodes are possible, but support for C++ opcodes will be added soon.
+Both C and C++ can be used to create opcodes now. A C++ example is
+provided in the examples directory. 
 
 Victor Lazzarini  
 October 2021
