@@ -33,8 +33,10 @@ SCode = {{
  }
 
  extern "C" int module_init(CSOUND *csound) {
+    csound->Message(csound, "****adding opcode****\\n");  
     csound->AppendOpcode(csound, "amp",sizeof(DATASPACE),0,3,"a","ak",
                          (SUBR) init, (SUBR) perf, NULL);
+    csound->Message(csound, "****added opcode****\\n");                     
     return 0;
  };
 }}

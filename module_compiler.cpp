@@ -55,7 +55,7 @@ using namespace clang::driver;
 
 namespace llvm {
   namespace orc {
-    class SimpleJIT {
+    class JIT {
     private:
       ExecutionSession ES;
       std::unique_ptr<TargetMachine> TM;
@@ -70,7 +70,7 @@ namespace llvm {
         return std::make_unique<SectionMemoryManager>();
       }
 
-      SimpleJIT(std::unique_ptr<TargetMachine> TM, DataLayout DL,
+      JIT(std::unique_ptr<TargetMachine> TM, DataLayout DL,
                 std::unique_ptr<DynamicLibrarySearchGenerator> PSGen)
         : ES(cantFail(SelfExecutorProcessControl::Create())),
           TM(std::move(TM)), DL(std::move(DL)) {
@@ -79,12 +79,12 @@ namespace llvm {
       }
 
     public:
-      ~SimpleJIT() {
+      ~JIT() {
         if (auto Err = ES.endSession())
           ES.reportError(std::move(Err));
       }
 
-      static Expected<std::unique_ptr<SimpleJIT>> Create() {
+      static Expected<std::unique_ptr<JIT>> Create() {
         auto JTMB = JITTargetMachineBuilder::detectHost();
         if (!JTMB)
           return JTMB.takeError();
@@ -97,7 +97,7 @@ namespace llvm {
         if (!PSGen)
           return PSGen.takeError();
         return
-          std::unique_ptr<SimpleJIT>(new SimpleJIT(std::move(*TM),
+          std::unique_ptr<JIT>(new JIT(std::move(*TM),
                                                    std::move(DL),
                                                    std::move(*PSGen)));
       }
@@ -122,7 +122,11 @@ namespace llvm {
   } // end namespace orc
 } // end namespace llvm
 
-static std::shared_ptr<llvm::orc::SimpleJIT> J;
+
+struct modulespace {
+  std::unique_ptr<llvm::orc::JIT> jit;
+};
+
 llvm::ExitOnError ExitOnErr;
 
 struct dataspace {
@@ -225,27 +229,61 @@ int module_compile(CSOUND *csound, dataspace *p) {
   std::unique_ptr<llvm::LLVMContext> Ctx(Act->takeLLVMContext());
   std::unique_ptr<llvm::Module> Module = Act->takeModule();
 
+  auto m =
+    *((modulespace **)csound->QueryGlobalVariable(csound,
+                                                  "::jit_module::"));
+  if(!m){
+    csound->InitError(csound, "could not get module dataspace\n");
+    return NOTOK;
+  }
+  
   if (Module){
-    if(!J){
-      J = ExitOnErr(llvm::orc::SimpleJIT::Create());
+    if(!m->jit){
+      m->jit = ExitOnErr(llvm::orc::JIT::Create());
     }
-
-    ExitOnErr(J->addModule(
-                           llvm::orc::ThreadSafeModule(std::move(Module), std::move(Ctx))));
-    auto Main = (int (*)(CSOUND *))ExitOnErr(J->getSymbolAddress("module_init"));
+    ExitOnErr(m->jit->addModule(llvm::orc::
+                                ThreadSafeModule(std::move(Module),
+                                                 std::move(Ctx))));
+    auto Main = (int (*)(CSOUND *))
+      ExitOnErr(m->jit->getSymbolAddress("module_init"));
     *p->res = (int) Main(csound);
   }
   
   return OK;
 }
 
-#define S(x)    sizeof(x)
+/* this creates the module dataspace object that holds the JIT*/
+int csoundModuleCreate(CSOUND *csound) {
+  if(csound->CreateGlobalVariable(csound,
+                                   "::jit_module::",
+                                  sizeof(modulespace*)) != 0){
+    csound->Message(csound, "error creating global var\n");
+    return NOTOK;
+  }
+  auto p = new modulespace;
+  auto pp = (modulespace **)
+    csound->QueryGlobalVariable(csound,"::jit_module::");                                
+  *pp = p;
+  return OK;
+}  
 
-static OENTRY localops[] = {
-  {(char *) "module_compile", S(dataspace), 0, 1, (char *)"i",(char *) "S",
-   (SUBR)module_compile, NULL, NULL }
-};
+/* this destroys the module dataspace object */
+int csoundModuleDestroy(CSOUND *csound) {
+  auto p = *((modulespace **)
+             csound->QueryGlobalVariable(csound,"::jit_module::"));  
+  delete p;
+  return OK;
+}  
 
-LINKAGE_BUILTIN(localops)
 
+int csoundModuleInit(CSOUND *csound){
+  csound->AppendOpcode(csound, (char *) "module_compile",
+                       sizeof(dataspace), 0, 1, (char *)"i",
+                       (char *) "S", (SUBR) module_compile, NULL, NULL);
+   return OK;
+}
+
+int csoundModuleInfo(void){
+  return ((CS_APIVERSION << 16) + (CS_APISUBVER << 8) + (int) sizeof(MYFLT));
+}
   
