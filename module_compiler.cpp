@@ -120,8 +120,8 @@ namespace llvm {
         return Sym->getAddress();
       }
     };
-  } // end namespace orc
-} // end namespace llvm
+  }
+}
 
 
 std::vector<const char*> &parse_str(char *str,
@@ -178,7 +178,11 @@ int module_compile(CSOUND *csound, dataspace *p) {
   const char *temp_directory = std::getenv("TMPDIR");
   if (temp_directory == nullptr) temp_directory = "/tmp";
   char srcpath[0x500];
-  std::snprintf(srcpath, 0x500, "%s/opcode_XXXXXX.cpp", temp_directory);
+
+  if(std::strcmp(p->h.optext->t.opcod, "c_module_compile"))
+    std::snprintf(srcpath, 0x500, "%s/opcode_XXXXXX.cpp", temp_directory);
+  else
+    std::snprintf(srcpath, 0x500, "%s/opcode_XXXXXX.c", temp_directory);
   int fd = mkstemps(srcpath, 4);
   FILE* fp = fdopen(fd, "w");
   std::fprintf(fp,"%s",code);
@@ -323,11 +327,16 @@ struct fcall {
 int fcall_opcode(CSOUND *csound, fcall *p) {
   auto m = *((modulespace **)
              csound->QueryGlobalVariable(csound,"::jit_module::"));
-  auto func = (int (*)(CSOUND *, const OPDS &, MYFLT*[], MYFLT*[]))
+  auto funcxx = (int (*)(CSOUND *, const OPDS &, MYFLT*[], MYFLT*[]))
     m->ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
-  if(func(csound,p->h,p->out,p->in) == OK)
+  auto func = (int (*)(CSOUND *, OPDS, MYFLT*[], MYFLT*[]))
+    m->ExitOnErr(m->jit->getSymbolAddress(p->entry->data));    
+  if(((strcmp(p->h.optext->t.opcod, "c_module_fcall") == 0 || 
+       strcmp(p->h.optext->t.opcod, "c_module_fcall") == 0) ?
+      func(csound,p->h,p->out,p->in) :
+      funcxx(csound,p->h,p->out,p->in)) == OK)
     return OK;
-  else return NOTOK;  
+  else return NOTOK;
 }
 
 
@@ -356,13 +365,22 @@ int csoundModuleDestroy(CSOUND *csound) {
 
 
 int csoundModuleInit(CSOUND *csound){
-  csound->AppendOpcode(csound, (char *) "module_compile",
+  csound->AppendOpcode(csound, (char *) "cxx_module_compile",
                        sizeof(dataspace), 0, 1, (char *)"i",
                        (char *) "SW", (SUBR) module_compile, NULL, NULL);
-  csound->AppendOpcode(csound, (char *) "module_fcall",
+  csound->AppendOpcode(csound, (char *) "c_module_compile",
+                       sizeof(dataspace), 0, 1, (char *)"i",
+                       (char *) "SW", (SUBR) module_compile, NULL, NULL);
+  csound->AppendOpcode(csound, (char *) "cxx_module_fcall",
                        sizeof(fcall), 0, 1, (char *)"********************************",
                        (char *) "Sm", (SUBR) fcall_opcode, NULL, NULL);
-  csound->AppendOpcode(csound, (char *) "module_fcallk",
+  csound->AppendOpcode(csound, (char *) "cxx_module_fcallk",
+                       sizeof(fcall), 0, 2, (char *)"********************************",
+                       (char *) "Sm", NULL, (SUBR) fcall_opcode, NULL);
+  csound->AppendOpcode(csound, (char *) "c_module_fcall",
+                       sizeof(fcall), 0, 1, (char *)"********************************",
+                       (char *) "Sm", (SUBR) fcall_opcode, NULL, NULL);
+  csound->AppendOpcode(csound, (char *) "c_module_fcallk",
                        sizeof(fcall), 0, 2, (char *)"********************************",
                        (char *) "Sm", NULL, (SUBR) fcall_opcode, NULL);
   

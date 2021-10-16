@@ -8,10 +8,10 @@
 SCode = {{
  #include <csdl.h>
  
- struct DATASPACE {
+ typedef struct dataspace {
     OPDS h;
     MYFLT *out, *in, *gain;
- };
+ } DATASPACE;
 
  static int init(CSOUND *csound, DATASPACE *p) {
        return OK;
@@ -34,7 +34,7 @@ SCode = {{
     return OK;
  }
 
- extern "C" int module_init(CSOUND *csound) { 
+ int module_init(CSOUND *csound) { 
     csound->AppendOpcode(csound, "amp",sizeof(DATASPACE),0,3,"a","ak",
                          (SUBR) init, (SUBR) perf, NULL);                     
     return 0;
@@ -50,7 +50,7 @@ SCscode = {{
 }}
 
 
-ires = module_compile(SCode, "module_init")
+ires = c_module_compile(SCode, "module_init")
 ires = compilestr(SCscode)
 
 </CsInstruments>

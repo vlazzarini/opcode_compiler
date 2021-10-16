@@ -7,26 +7,27 @@
 
  SCode = {{
   #include <csdl.h>
-  
-    int func(CSOUND *csound, OPDS h, MYFLT *out[], MYFLT *in[]) {
+  extern "C" {
+    int func(CSOUND *csound, const OPDS &h, MYFLT *out[], MYFLT *in[]) {
      csound->Message(csound, "there are %d inputs and %d outputs\\n", INCOUNT-1, OUTCOUNT);
      *out[0] =  *in[0];
      return OK;
    }
   
-   int funck(CSOUND *csound, OPDS h, MYFLT *out[], MYFLT *in[]) {
+   int funck(CSOUND *csound, const OPDS &h, MYFLT *out[], MYFLT *in[]) {
      *out[0] =  *in[0];
      return OK;
+   }
   }
 }}
 
- gires = c_module_compile(SCode)
+ gires = cxx_module_compile(SCode)
 
 instr 1
  if gires == 0 then
-  i1 c_module_fcall "func", 1
+  i1 cxx_module_fcall "func", 1
   print i1
-  k1 c_module_fcallk "funck", 1
+  k1 cxx_module_fcallk "funck", 1
   printk2 k1
  endif 
 endin 
