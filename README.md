@@ -88,7 +88,7 @@ SCode = {{
     csound->AppendOpcode(csound, "amp",sizeof(DATASPACE),0,3,"a","ak",
                          (SUBR) init, (SUBR) perf, NULL);
     return 0;
- };
+ }
  }}
 
 ires= c_module_compile(SCode, "module_init")
@@ -122,7 +122,7 @@ to use at i- or perf-time.
 A C function with the signature 
 
 ```
- int func(CSOUND *csound,  OPDS h, MYFLT*out[], MYFLT *in[])
+ int func(CSOUND *csound, OPDS h, MYFLT*out[], MYFLT *in[])
 ```
 
 or a C++ function with the signature
