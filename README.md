@@ -116,9 +116,9 @@ Module function calls
 ------------------
 
 Calling the module entry point after compilation is optional. If no
-entry point, or an empty string is given, nothing is called. In this
+entry point, or an empty string is given, no code is executed. In this
 case, we can use the module compiler to provide general-purpose code
-to use at i- or perf-time.
+to be called at i- or perf-time.
 
 A C function with the signature 
 
