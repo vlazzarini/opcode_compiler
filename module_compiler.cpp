@@ -124,18 +124,53 @@ namespace llvm {
 } // end namespace llvm
 
 
+std::vector<const char*> &parse_str(char *str,
+                              std::vector<const char*> &argv) {
+  int32_t i = 0, n = 0, end = strlen(str);
+  int32_t argc = 0, offset = argv.size();
+  while (str[i] == ' ')
+    i++;
+  if (str[i] != '\0')
+    argc = 1;
+  while (str[i] != '\0') {
+    if (str[i] == ' ') {
+      while (str[++i] == ' ')
+        ;
+      if (str[i] == '\0')
+        break;
+      argc++;
+    }
+    i++;
+  }
+  argv.resize(offset + argc);
+  i = 0;
+  while (str[i] == ' ')
+    i++;
+  for (n = offset; n < argv.size() && i < end; n++) {
+    argv[n] = &(str[i]);
+    while (str[++i] != ' ' && i < end)
+      ;
+    if (i >= end)
+      break;
+    str[i] = '\0';
+    while (str[++i] == ' ' && i < end)
+      ;
+  }
+  return argv;
+}
+
 struct modulespace {
   std::unique_ptr<llvm::orc::JIT> jit;
   llvm::ExitOnError ExitOnErr;
 };
-
-
 
 struct dataspace {
   OPDS h;
   MYFLT *res;
   STRINGDAT *code;
   STRINGDAT *entry;
+  STRINGDAT *cflags;
+  STRINGDAT *dylibs;
 };
 
 int module_compile(CSOUND *csound, dataspace *p) {
@@ -182,6 +217,9 @@ int module_compile(CSOUND *csound, dataspace *p) {
 #endif
   args.push_back("-fsyntax-only");
   args.push_back("-w");
+
+  if(p->INCOUNT > 2) 
+    parse_str(p->cflags->data, args);
    
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   TextDiagnosticPrinter *DiagClient = new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
@@ -247,18 +285,13 @@ int module_compile(CSOUND *csound, dataspace *p) {
   std::unique_ptr<llvm::Module> Module = Act->takeModule();
   
   if (Module){
-    //    std::vector<std::string> libs;
-    // #ifdef __APPLE__   
-    //   libs.push_back("/usr/lib/libstdc++.dylib");
-    //   // Linux defs
-    // #elif defined(__linux__)
-    //   libs.push_back("/usr/lib/gcc/x86_64-linux-gnu/9/libstdc++.so");
-    //   libs.push_back("/usr/lib/gcc/x86_64-linux-gnu/9/libgcc_s.so");
-    //   libs.push_back("/usr/lib/x86_64-linux-gnu/libm.so");
-    // #endif          
-    //  for (auto lib : libs) 
-    //      llvm::sys::DynamicLibrary::
-    //        LoadLibraryPermanently(libs.c_str());
+    if(p->INCOUNT > 3){
+      std::vector<const char*> libs;  
+      parse_str(p->dylibs->data, libs);
+      for (auto lib : libs) 
+          llvm::sys::DynamicLibrary::
+            LoadLibraryPermanently(lib);
+    }
             
     if(!m->jit){
       m->jit = ExitOnErr(llvm::orc::JIT::Create());

@@ -7,14 +7,15 @@ module compiler, which can be used to add new opcodes to Csound on-the-fly.
 The module compiler syntax is
 
 ```
-ires module_compile Scode
+ires module_compile Scode[, Sentry]
 ```
 
 where `Scode` is a C/C++-language module containing the opcodes to be added to the system,
-provided as a string. This uses the C API for opcodes, and it should contain an entry point declared as
+provided as a string, and `Sentry` is the name of the entry point
+function declared as
 
 ```
-extern "C" int module_init(CSOUND *csound); 
+extern "C" int entry(CSOUND *csound); 
 ```
 
 where the new opcodes can be added to the system using
@@ -27,7 +28,6 @@ int csound::AppendOpcode(CSOUND *, const char *opname,
                                 int (*kopadr)(CSOUND *, void *),
                                 int (*aopadr)(CSOUND *, void *));
 ```
-
 
 Building
 ------
@@ -130,7 +130,7 @@ to use at i- or perf-time.
 A function with the signature
 
 ```
-int func(CSOUND *, const OPDS &, MYFLT*[], MYFLT*[])
+int func(CSOUND *csound, const OPDS &h, MYFLT*out[], MYFLT *in[])
 ```
 
 may be invoked at a later time using one of two opcodes:
@@ -147,8 +147,9 @@ xr1[,xr2, ...]  module_fcallk Sfunc[,...]
 
 The former runs at i-time only and the latter is called at perf-time,
 on every k-cycle. The opcodes have up to 32 outputs and 256 inputs
-whose types may be determined by the user. The `jit_example.csd`
-demonstrates the use of these functions.
+whose types may be determined by the user. These are available to the
+function as the `MYFLT *` arrays `out` and `in`.  The
+`jit_example.csd` demonstrates the use of these functions.
 
 Victor Lazzarini  
 October 2021

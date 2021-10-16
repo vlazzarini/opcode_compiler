@@ -12,7 +12,7 @@
     int func(CSOUND *csound, const OPDS &h, MYFLT *out[], MYFLT *in[]) {
      csound->Message(csound, "there are %d inputs and %d outputs\\n", INCOUNT-1, OUTCOUNT);
      *out[0] =  *in[0];
-    return OK;
+     return OK;
    }
   
    int funck(CSOUND *csound, const OPDS &h, MYFLT *out[], MYFLT *in[]) {
