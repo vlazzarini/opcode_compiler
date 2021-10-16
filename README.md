@@ -1,7 +1,7 @@
 Csound JIT Module Compilers
 ============
 
-This experimental opcode builds on the initial work by Michael Goggins, and is based on the
+This experimental opcode library build on the initial work by Michael Goggins, and is based on the
 llvm/clang interpreter example code. It provides a just-in-time C and C++
 module compilers, which can be used to add new opcodes to Csound or to
 execute code on-the-fly.
