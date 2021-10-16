@@ -7,7 +7,7 @@ module compiler, which can be used to add new opcodes to Csound on-the-fly.
 The module compiler syntax is
 
 ```
-ires module_compile Scode[, Sentry]
+ires module_compile Scode[, Sentry,Scflags,Sdylibs]
 ```
 
 where `Scode` is a C/C++-language module containing the opcodes to be added to the system,
@@ -28,6 +28,9 @@ int csound::AppendOpcode(CSOUND *, const char *opname,
                                 int (*kopadr)(CSOUND *, void *),
                                 int (*aopadr)(CSOUND *, void *));
 ```
+
+The remaining optional parameters can be used to pass any C/C++ flags
+to the compiler, and load any required dylibs.
 
 Building
 ------
