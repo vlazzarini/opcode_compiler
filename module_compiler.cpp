@@ -126,9 +126,10 @@ namespace llvm {
 
 struct modulespace {
   std::unique_ptr<llvm::orc::JIT> jit;
+  llvm::ExitOnError ExitOnErr;
 };
 
-llvm::ExitOnError ExitOnErr;
+
 
 struct dataspace {
   OPDS h;
@@ -148,8 +149,21 @@ int module_compile(CSOUND *csound, dataspace *p) {
   std::fprintf(fp,"%s",code);
   std::fclose(fp);
   std::vector<const char*> args;
+  *p->res = NOTOK;
+  auto m =
+    *((modulespace **)csound->QueryGlobalVariable(csound,
+                                                  "::jit_module::"));
+  if(!m){
+    csound->InitError(csound, "could not get module dataspace\n");
+    return NOTOK;
+  }
+
+  llvm::ExitOnError &ExitOnErr = m->ExitOnErr;
+
+  
   args.push_back("arg0");
   args.push_back(srcpath);
+  
   
   // MACOS defs
 #ifdef __APPLE__   
@@ -234,14 +248,6 @@ int module_compile(CSOUND *csound, dataspace *p) {
 
   std::unique_ptr<llvm::LLVMContext> Ctx(Act->takeLLVMContext());
   std::unique_ptr<llvm::Module> Module = Act->takeModule();
-
-  auto m =
-    *((modulespace **)csound->QueryGlobalVariable(csound,
-                                                  "::jit_module::"));
-  if(!m){
-    csound->InitError(csound, "could not get module dataspace\n");
-    return NOTOK;
-  }
   
   if (Module){
     //    std::vector<std::string> libs;
@@ -283,13 +289,13 @@ struct fcall {
 };
 
 int fcall_opcode(CSOUND *csound, fcall *p) {
-    auto m = *((modulespace **)
-               csound->QueryGlobalVariable(csound,"::jit_module::"));
-    auto func = (int (*)(CSOUND *, const OPDS &, MYFLT*[], MYFLT*[]))
-    ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
-    if(func(csound,p->h,p->out,p->in) == OK)
-      return OK;
-    else return NOTOK;  
+  auto m = *((modulespace **)
+             csound->QueryGlobalVariable(csound,"::jit_module::"));
+  auto func = (int (*)(CSOUND *, const OPDS &, MYFLT*[], MYFLT*[]))
+    m->ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
+  if(func(csound,p->h,p->out,p->in) == OK)
+    return OK;
+  else return NOTOK;  
 }
 
 
@@ -324,6 +330,9 @@ int csoundModuleInit(CSOUND *csound){
   csound->AppendOpcode(csound, (char *) "module_fcall",
                        sizeof(fcall), 0, 1, (char *)"********************************",
                        (char *) "Sm", (SUBR) fcall_opcode, NULL, NULL);
+  csound->AppendOpcode(csound, (char *) "module_fcallk",
+                       sizeof(fcall), 0, 2, (char *)"********************************",
+                       (char *) "Sm", NULL, (SUBR) fcall_opcode, NULL);
   
   return OK;
 }
