@@ -202,10 +202,12 @@ int module_compile(CSOUND *csound, dataspace *p) {
   args.push_back("-DTARGET_OS_OSX");
   args.push_back("-DTARGET_OS_IPHONE");
   args.push_back("-I/Library/Frameworks/CsoundLib64.framework/Headers");
-  args.push_back("-I/usr/local/lib/clang/13.0.0/include/");
   args.push_back("-I/Applications/Xcode.app/Contents/Developer"
                  "/Platforms/MacOSX.platform/Developer/SDKs"
                  "/MacOSX.sdk/usr/include/c++/v1");
+  args.push_back("-I/Applications/Xcode.app/Contents/Developer/"
+                 "Toolchains/XcodeDefault.xctoolchain"
+                 "/usr/lib/tapi/13.0.0/include/");
   args.push_back("-I/Applications/Xcode.app/Contents/Developer"
                  "/Platforms/MacOSX.platform/Developer/SDKs"
                  "/MacOSX.sdk/usr/include/");

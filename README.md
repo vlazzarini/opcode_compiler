@@ -30,7 +30,7 @@ int csound::AppendOpcode(CSOUND *, const char *opname,
 ```
 
 The remaining optional parameters can be used to pass any C/C++ flags
-to the compiler, and load any required dylibs.
+to the compiler, and load any required dynamic libs.
 
 Building
 ------
