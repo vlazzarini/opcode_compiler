@@ -6,7 +6,7 @@ llvm/clang interpreter example code. It provides a just-in-time C and C++
 module compilers, which can be used to add new opcodes to Csound or to
 execute code on-the-fly.
 
-The module compilers syntax for C and C++ are
+The module compilers for C and C++ are
 
 ```
 ires c_module_compile Scode[, Sentry, Scflags, Sdylibs]
@@ -54,7 +54,8 @@ int csound::AppendOpcode(CSOUND *, const char *opname,
 ```
 
 The C code is given as a string to `opcode_compile` using the `{{ }}` multiline
-string.
+string. Note that this requires any backslashes (`\`) to be escaped
+with another backslash (`\\`).
 
 ```
 SCode = {{
