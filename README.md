@@ -54,8 +54,8 @@ int csound::AppendOpcode(CSOUND *, const char *opname,
 ```
 
 The C code is given as a string to `opcode_compile` using the `{{ }}` multiline
-string. Note that this requires any backslashes (`\`) to be escaped
-with another backslash (`\\`).
+string. Note that this requires any backslashes (`\`) found in the
+code to be escaped with another backslash (`\\`).
 
 ```
 SCode = {{
