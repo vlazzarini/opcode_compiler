@@ -133,6 +133,7 @@ struct dataspace {
   OPDS h;
   MYFLT *res;
   STRINGDAT *code;
+  STRINGDAT *entry;
 };
 
 int module_compile(CSOUND *csound, dataspace *p) {
@@ -262,7 +263,7 @@ int module_compile(CSOUND *csound, dataspace *p) {
                                 ThreadSafeModule(std::move(Module),
                                                  std::move(Ctx))));
     auto Main = (int (*)(CSOUND *))
-      ExitOnErr(m->jit->getSymbolAddress("module_init"));
+      ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
     *p->res = (int) Main(csound);
   }
   
@@ -296,7 +297,7 @@ int csoundModuleDestroy(CSOUND *csound) {
 int csoundModuleInit(CSOUND *csound){
   csound->AppendOpcode(csound, (char *) "module_compile",
                        sizeof(dataspace), 0, 1, (char *)"i",
-                       (char *) "S", (SUBR) module_compile, NULL, NULL);
+                       (char *) "SS", (SUBR) module_compile, NULL, NULL);
    return OK;
 }
 

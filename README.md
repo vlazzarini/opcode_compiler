@@ -99,7 +99,7 @@ SCode = {{
  };
  }}
 
-ires= module_compile(SCode)
+ires= module_compile(SCode, "module_init")
 ```
 
 This compiles the new opcode (`amp`) using the JIT compiler and executes the `module_init` function to add
