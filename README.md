@@ -2,9 +2,8 @@ Csound JIT Module Compilers
 ============
 
 This experimental opcode library build on the initial work by Michael Goggins, and is based on the
-llvm/clang interpreter example code. It provides a just-in-time C and C++
-module compilers, which can be used to add new opcodes to Csound or to
-execute code on-the-fly.
+llvm/clang interpreter example code. It provides opcodes for C/C++
+compilation to LLVM IR, as well as to execute compiled code. 
 
 The module compilers for C and C++ are
 
@@ -27,8 +26,9 @@ If C++ is used then we have
 extern "C" int entry(CSOUND *csound);
 ```
 
-The remaining optional parameters can be used to pass any C++ flags
-to the compiler, and load any required dynamic libs.
+This function is executed at i-time immediately following any successful compilation.
+The remaining optional parameters can be used to pass any C++ flags to
+the compiler, and load any required dynamic libs.
 
 Example
 ------
@@ -116,7 +116,7 @@ Module function calls
 ------------------
 
 Calling the module entry point after compilation is optional. If no
-entry point, or an empty string is given, no code is executed. In this
+entry point, or an empty string, is given, no code is executed. In this
 case, we can use the module compiler to provide general-purpose code
 to be called at i- or perf-time.
 
