@@ -1,22 +1,22 @@
 /*
-    opcode_compile.cpp:
+  opcode_compile.cpp:
 
-    Copyright (C) 2021, Victor Lazzarini
+  Copyright (C) 2021, Victor Lazzarini
 
-    This plugin library is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
+  This plugin library is free software; you can redistribute it
+  and/or modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
 
-    This software is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
+  This software is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Lesser General Public License for more details.
 
-    You should have received a copy of the GNU Lesser General Public
-    License along with Csound; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-    02110-1301 USA
+  You should have received a copy of the GNU Lesser General Public
+  License along with Csound; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301 USA
 */
 
 #include "clang/Basic/DiagnosticOptions.h"
@@ -72,7 +72,7 @@ namespace llvm {
       }
 
       JIT(std::unique_ptr<TargetMachine> TM, DataLayout DL,
-                std::unique_ptr<DynamicLibrarySearchGenerator> PSGen)
+          std::unique_ptr<DynamicLibrarySearchGenerator> PSGen)
         : ES(cantFail(SelfExecutorProcessControl::Create())),
           TM(std::move(TM)), DL(std::move(DL)) {
         llvm::sys::DynamicLibrary::LoadLibraryPermanently(nullptr);
@@ -99,8 +99,8 @@ namespace llvm {
           return PSGen.takeError();
         return
           std::unique_ptr<JIT>(new JIT(std::move(*TM),
-                                                   std::move(DL),
-                                                   std::move(*PSGen)));
+                                       std::move(DL),
+                                       std::move(*PSGen)));
       }
 
       const TargetMachine &getTargetMachine() const { return *TM; }
@@ -244,18 +244,18 @@ int module_compile(CSOUND *csound, dataspace *p) {
   }
   
   if (Module){
-//    std::vector<std::string> libs;
-// #ifdef __APPLE__   
-//   libs.push_back("/usr/lib/libstdc++.dylib");
-//   // Linux defs
-// #elif defined(__linux__)
-//   libs.push_back("/usr/lib/gcc/x86_64-linux-gnu/9/libstdc++.so");
-//   libs.push_back("/usr/lib/gcc/x86_64-linux-gnu/9/libgcc_s.so");
-//   libs.push_back("/usr/lib/x86_64-linux-gnu/libm.so");
-// #endif          
-//  for (auto lib : libs) 
-//      llvm::sys::DynamicLibrary::
-//        LoadLibraryPermanently(libs.c_str());
+    //    std::vector<std::string> libs;
+    // #ifdef __APPLE__   
+    //   libs.push_back("/usr/lib/libstdc++.dylib");
+    //   // Linux defs
+    // #elif defined(__linux__)
+    //   libs.push_back("/usr/lib/gcc/x86_64-linux-gnu/9/libstdc++.so");
+    //   libs.push_back("/usr/lib/gcc/x86_64-linux-gnu/9/libgcc_s.so");
+    //   libs.push_back("/usr/lib/x86_64-linux-gnu/libm.so");
+    // #endif          
+    //  for (auto lib : libs) 
+    //      llvm::sys::DynamicLibrary::
+    //        LoadLibraryPermanently(libs.c_str());
             
     if(!m->jit){
       m->jit = ExitOnErr(llvm::orc::JIT::Create());
@@ -265,20 +265,38 @@ int module_compile(CSOUND *csound, dataspace *p) {
                                                  std::move(Ctx))));
     if(p->INCOUNT > 1) 
       if(std::strcmp(p->entry->data,"")) {
-      auto Main = (int (*)(CSOUND *))
-       ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
-      *p->res = (int) Main(csound);
-      return OK;
-     }
+        auto Main = (int (*)(CSOUND *))
+          ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
+        *p->res = (int) Main(csound);
+        return OK;
+      }
   }
   *p->res = 0;
   return OK;
 }
+#define MAXA 32
+struct fcall {
+  OPDS h;
+  MYFLT *out[MAXA];
+  STRINGDAT *entry;
+  MYFLT *in[VARGMAX];
+};
+
+int fcall_opcode(CSOUND *csound, fcall *p) {
+    auto m = *((modulespace **)
+               csound->QueryGlobalVariable(csound,"::jit_module::"));
+    auto func = (int (*)(CSOUND *, const OPDS &, MYFLT*[], MYFLT*[]))
+    ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
+    if(func(csound,p->h,p->out,p->in) == OK)
+      return OK;
+    else return NOTOK;  
+}
+
 
 /* this creates the module dataspace object that holds the JIT*/
 int csoundModuleCreate(CSOUND *csound) {
   if(csound->CreateGlobalVariable(csound,
-                                   "::jit_module::",
+                                  "::jit_module::",
                                   sizeof(modulespace*)) != 0){
     csound->Message(csound, "error creating global var\n");
     return NOTOK;
@@ -303,7 +321,11 @@ int csoundModuleInit(CSOUND *csound){
   csound->AppendOpcode(csound, (char *) "module_compile",
                        sizeof(dataspace), 0, 1, (char *)"i",
                        (char *) "SW", (SUBR) module_compile, NULL, NULL);
-   return OK;
+  csound->AppendOpcode(csound, (char *) "module_fcall",
+                       sizeof(fcall), 0, 1, (char *)"********************************",
+                       (char *) "Sm", (SUBR) fcall_opcode, NULL, NULL);
+  
+  return OK;
 }
 
 int csoundModuleInfo(void){
