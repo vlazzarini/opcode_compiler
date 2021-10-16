@@ -7,6 +7,7 @@
 
 SCode = {{
  #include <csdl.h>
+ 
  struct DATASPACE {
     OPDS h;
     MYFLT *out, *in, *gain;
@@ -29,14 +30,13 @@ SCode = {{
     }
 
     for(n=offset; n < nsmps; n++) out[n] = in[n]*g;
+
     return OK;
  }
 
- extern "C" int module_init(CSOUND *csound) {
-    csound->Message(csound, "****adding opcode****\\n");  
+ extern "C" int module_init(CSOUND *csound) { 
     csound->AppendOpcode(csound, "amp",sizeof(DATASPACE),0,3,"a","ak",
-                         (SUBR) init, (SUBR) perf, NULL);
-    csound->Message(csound, "****added opcode****\\n");                     
+                         (SUBR) init, (SUBR) perf, NULL);                     
     return 0;
  };
 }}

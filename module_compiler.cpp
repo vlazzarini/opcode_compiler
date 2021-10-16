@@ -157,7 +157,11 @@ int module_compile(CSOUND *csound, dataspace *p) {
   args.push_back("-I/usr/local/lib/clang/13.0.0/include/");
   args.push_back("-I/Applications/Xcode.app/Contents/Developer"
                  "/Platforms/MacOSX.platform/Developer/SDKs"
+                 "/MacOSX.sdk/usr/include/c++/v1");
+  args.push_back("-I/Applications/Xcode.app/Contents/Developer"
+                 "/Platforms/MacOSX.platform/Developer/SDKs"
                  "/MacOSX.sdk/usr/include/");
+
   // Linux defs
 #elif defined(__linux__)
   args.push_back("-I/usr/local/include/");
@@ -238,6 +242,19 @@ int module_compile(CSOUND *csound, dataspace *p) {
   }
   
   if (Module){
+//    std::vector<std::string> libs;
+// #ifdef __APPLE__   
+//   libs.push_back("/usr/lib/libstdc++.dylib");
+//   // Linux defs
+// #elif defined(__linux__)
+//   libs.push_back("/usr/lib/gcc/x86_64-linux-gnu/9/libstdc++.so");
+//   libs.push_back("/usr/lib/gcc/x86_64-linux-gnu/9/libgcc_s.so");
+//   libs.push_back("/usr/lib/x86_64-linux-gnu/libm.so");
+// #endif          
+//  for (auto lib : libs) 
+//      llvm::sys::DynamicLibrary::
+//        LoadLibraryPermanently(libs.c_str());
+            
     if(!m->jit){
       m->jit = ExitOnErr(llvm::orc::JIT::Create());
     }
