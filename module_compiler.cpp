@@ -46,6 +46,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cstdio>
+#include <cstring>
 #include <unistd.h>
 #include <csdl.h>
 #include <vector>
@@ -184,12 +185,12 @@ int module_compile(CSOUND *csound, dataspace *p) {
     T.setObjectFormat(llvm::Triple::ELF);
 #endif
 
-  ExitOnErr.setBanner("Csound opcode compiler");
+  ExitOnErr.setBanner("Csound opcode compiler: ");
   Driver TheDriver(llvm::sys::fs::getMainExecutable("csound",
                                                     (void*)(intptr_t)
                                                     csoundModuleInfo),
                    T.str(), Diags);
-  TheDriver.setTitle("Csound opcode compiler");
+  TheDriver.setTitle("Csound opcode compiler: ");
   TheDriver.setCheckInputsExist(false);
 
   std::unique_ptr<Compilation> C(TheDriver.BuildCompilation(args));
@@ -262,11 +263,15 @@ int module_compile(CSOUND *csound, dataspace *p) {
     ExitOnErr(m->jit->addModule(llvm::orc::
                                 ThreadSafeModule(std::move(Module),
                                                  std::move(Ctx))));
-    auto Main = (int (*)(CSOUND *))
-      ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
-    *p->res = (int) Main(csound);
+    if(p->INCOUNT > 1) 
+      if(std::strcmp(p->entry->data,"")) {
+      auto Main = (int (*)(CSOUND *))
+       ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
+      *p->res = (int) Main(csound);
+      return OK;
+     }
   }
-  
+  *p->res = 0;
   return OK;
 }
 
@@ -297,7 +302,7 @@ int csoundModuleDestroy(CSOUND *csound) {
 int csoundModuleInit(CSOUND *csound){
   csound->AppendOpcode(csound, (char *) "module_compile",
                        sizeof(dataspace), 0, 1, (char *)"i",
-                       (char *) "SS", (SUBR) module_compile, NULL, NULL);
+                       (char *) "SW", (SUBR) module_compile, NULL, NULL);
    return OK;
 }
 
