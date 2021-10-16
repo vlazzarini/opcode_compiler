@@ -159,11 +159,8 @@ int module_compile(CSOUND *csound, dataspace *p) {
   }
 
   llvm::ExitOnError &ExitOnErr = m->ExitOnErr;
-
-  
   args.push_back("arg0");
   args.push_back(srcpath);
-  
   
   // MACOS defs
 #ifdef __APPLE__   

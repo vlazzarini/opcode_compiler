@@ -117,8 +117,38 @@ SCscode = {{
 ires = compilestr(SCscode)
 ```
 
-Both C and C++ can be used to create opcodes now. A C++ example is
-provided in the examples directory. 
+Both C and C++ can be used to create opcodes now. A C++ example is provided in the examples directory. 
+
+Module function calls
+------------------
+
+Calling the module entry point after compilation is optional. If no
+entry point, or an empty string is given, nothing is called. In this
+case, we can use the module compiler to provide general-purpose code
+to use at i- or perf-time.
+
+A function with the signature
+
+```
+int func(CSOUND *, const OPDS &, MYFLT*[], MYFLT*[])
+```
+
+may be invoked at a later time using one of two opcodes:
+
+```
+ir1[,ir2, ...]  module_fcall Sfunc[,...] 
+```
+
+and
+
+```
+xr1[,xr2, ...]  module_fcallk Sfunc[,...] 
+```
+
+The former runs at i-time only and the latter is called at perf-time,
+on every k-cycle. The opcodes have up to 32 outputs and 256 inputs
+whose types may be determined by the user. The `jit_example.csd`
+demonstrates the use of these functions.
 
 Victor Lazzarini  
 October 2021

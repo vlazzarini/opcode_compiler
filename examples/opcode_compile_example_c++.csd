@@ -8,7 +8,7 @@
 SCode = {{
  #include <plugin.h>
  
-struct DelayLine : csnd::Plugin<1, 3> {
+ struct DelayLine : csnd::Plugin<1, 3> {
   static constexpr char const *otypes = "a";
   static constexpr char const *itypes = "aki";
   csnd::AuxMem<MYFLT> delay;
