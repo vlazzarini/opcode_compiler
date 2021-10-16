@@ -3,7 +3,9 @@ Csound JIT Module Compiler
 
 This experimental opcode builds on the initial work by Michael Goggins, and is based on the
 llvm/clang interpreter example code. It provides a just-in-time C/C++
-module compiler, which can be used to add new opcodes to Csound on-the-fly.
+module compiler, which can be used to add new opcodes to Csound or to
+execute code on-the-fly.
+
 The module compiler syntax is
 
 ```
@@ -31,26 +33,6 @@ int csound::AppendOpcode(CSOUND *, const char *opname,
 
 The remaining optional parameters can be used to pass any C/C++ flags
 to the compiler, and load any required dynamic libs.
-
-Building
-------
-
-The opcodes require LLVM and Clang libraries, version >= 13.0.0, to be installed from
-https://github.com/llvm/llvm-project, as well as Csound and CMake. With these in place,
-the following steps apply
-
-```
-mkdir build
-cd build
-cmake ..
-make 
-```
-
-and to install it in the default location, 
-
-```
-make install
-```
 
 Example
 ------
@@ -153,6 +135,26 @@ on every k-cycle. The opcodes have up to 32 outputs and 256 inputs
 whose types may be determined by the user. These are available to the
 function as the `MYFLT *` arrays `out` and `in`.  The
 `jit_example.csd` demonstrates the use of these functions.
+
+Building the opcodes
+---------
+
+The opcodes require LLVM and Clang libraries, version >= 13.0.0, to be installed from
+https://github.com/llvm/llvm-project, as well as Csound and CMake. With these in place,
+the following steps apply
+
+```
+mkdir build
+cd build
+cmake ..
+make 
+```
+
+and to install it in the default location, 
+
+```
+make install
+```
 
 Victor Lazzarini  
 October 2021
