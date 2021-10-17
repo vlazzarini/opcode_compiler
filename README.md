@@ -5,7 +5,6 @@ This experimental opcode library builds on the initial work by Michael Goggins, 
 llvm/clang interpreter code provided in clang library sources. It includes opcodes for C/C++
 compilation to LLVM IR, as well as to execute compiled code.
 
-
 Operation principles
 ------------------
 
@@ -68,7 +67,7 @@ The orchestra code is composed of two opcode calls:
 - to `c_module_compile` adding the new opcode
 - to `compilestr` compiling the Csound code that uses this opcode.
 
-New opcodes are added to the system using the Csound API function
+New C opcodes are added to the system using the Csound API function
 
 ```
 int csound::AppendOpcode(CSOUND *, const char *opname,

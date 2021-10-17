@@ -41,12 +41,27 @@ SCode = {{
  };
 }}
 
+ksmps = 64
 SCscode = {{
+
+    opcode Amp,a,ak
+      a1,k1 xin
+      a2 = a1*k1
+      xout a2
+    endop
+
     instr 1
      a1 oscili 0dbfs,A4
      a2 amp a1,0.5
      out a2
     endin
+
+     instr 2
+     a1 oscili 0dbfs,A4
+     a2 Amp a1,0.1
+     out a2
+    endin
+
 }}
 
 
@@ -55,6 +70,6 @@ ires compilestr SCscode
 
 </CsInstruments>
 <CsScore>
-i1 0 2
+i2 0 5000
 </CsScore>
 </CsoundSynthesizer>

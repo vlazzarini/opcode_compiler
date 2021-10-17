@@ -277,6 +277,7 @@ if(WIN32)
     add_definitions(-DWIN32)
 endif()
 
+
 include_directories(${LLVM_INCLUDE_DIRS})
 include_directories(${CLANG_INCLUDE_DIRS})
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
@@ -289,6 +290,9 @@ find_program(LLVMCONFIG llvm-config HINTS /usr/bin /usr/local/bin /usr/local/opt
 make_plugin(module_compiler module_compiler.cpp)
 target_include_directories(module_compiler PRIVATE
 ${CSOUND_INCLUDE_DIRS})
+target_include_directories(module_compiler PRIVATE
+${CMAKE_SOURCE_DIR})
+
 exec_program(${LLVMCONFIG} ARGS --libs  OUTPUT_VARIABLE
 llvm_libs)
 exec_program(${LLVMCONFIG} ARGS --system-libs OUTPUT_VARIABLE

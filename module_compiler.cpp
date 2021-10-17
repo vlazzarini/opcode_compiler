@@ -230,8 +230,10 @@ int module_compile(CSOUND *csound, dataspace *p) {
   args.push_back("-I/usr/local/include/");
   args.push_back("-I/usr/local/include/csound");
 #endif
+  args.push_back("-I.");
   args.push_back("-fsyntax-only");
   args.push_back("-w");
+  args.push_back("-g");
 
   if(p->INCOUNT > 2) 
     parse_str(p->cflags->data, args);
@@ -312,6 +314,7 @@ int module_compile(CSOUND *csound, dataspace *p) {
     ExitOnErr(m->jit->addModule(llvm::orc::
                                 ThreadSafeModule(std::move(Module),
                                                  std::move(Ctx))));
+    *p->handle = conv.fl;
     if(p->INCOUNT > 1) 
       if(std::strcmp(p->entry->data,"")) {
         auto Main = (int (*)(CSOUND *))
@@ -322,7 +325,6 @@ int module_compile(CSOUND *csound, dataspace *p) {
   } else return NOTOK;
   
   *p->res = 0;
-  *p->handle = conv.fl;
   return OK;
 }
 
@@ -351,11 +353,71 @@ int fcall_opcode(CSOUND *csound, fcall *p) {
   else return NOTOK;
 }
 
+
+#include "jitplugin.h"
+#include <cstdlib>
+
+struct oobj {
+  OPDS h;
+  MYFLT *out[MAXA];
+  MYFLT *handle;
+  STRINGDAT *entry;
+  MYFLT *in[VARGMAX];
+  std::shared_ptr<JITPlugin> dataspace;
+};
+
+
+int deinit_plugin_opcode(CSOUND *csound, oobj *p) {
+  if(p->dataspace != nullptr) {
+    p->dataspace.reset();
+  }
+   return OK;
+}
+
+int instantiate_opcode(CSOUND *csound, oobj *p) {
+  fltptr conv;
+  conv.fl = *p->handle;
+  auto m = conv.m;
+  auto funcxx = (JITPlugin* (*)(CSOUND *)) 
+    m->ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
+  auto ptr = funcxx(csound);
+  if (ptr != nullptr) {
+    //std::memcpy((void *)ptr, &(p->h), sizeof(OPDS)); 
+    p->dataspace.reset(ptr);
+    csound->RegisterDeinitCallback(csound,p,(SUBR) deinit_plugin_opcode);
+    return OK;
+   }
+  return NOTOK;    
+}
+
+
+int init_plugin_opcode(CSOUND *csound, oobj *p) {
+  if(instantiate_opcode(csound,p) == OK) { 
+  //MYFLT **iargs = opc->inargs.data();
+  //MYFLT **oargs = opc->outargs.data();
+  //std::memcpy(iargs,p->in, sizeof(MYFLT)*(p->INCOUNT-2));
+  //std::memcpy(oargs,p->out, sizeof(MYFLT)*(p->OUTCOUNT));
+  //opc->csound = (csnd::Csound *) csound;
+  csound->Message(csound, "before opc init\n");
+  return OK;//p->dataspace->ini();
+  } return NOTOK;
+}
+
+int perf_plugin_opcode(CSOUND *csound, oobj *p) {
+  if(p->dataspace != nullptr) {
+    // auto opc = p->dataspace;
+  //opc->nsmps_set();
+  return OK;//opc->perf();
+  } return NOTOK;
+}
+
+
 int csoundModuleCreate(CSOUND *csound) {
   return OK;
 }
 
 int csoundModuleDestroy(CSOUND *csound) {
+  llvm::llvm_shutdown();
   return OK;
 }
 
@@ -368,16 +430,21 @@ int csoundModuleInit(CSOUND *csound){
                        (char *) "SW", (SUBR) module_compile, NULL, NULL);
   csound->AppendOpcode(csound, (char *) "cxx_module_fcall",
                        sizeof(fcall), 0, 1, (char *)"********************************",
-                       (char *) "iSm", (SUBR) fcall_opcode, NULL, NULL);
+                       (char *) "iSM", (SUBR) fcall_opcode, NULL, NULL);
   csound->AppendOpcode(csound, (char *) "cxx_module_fcallk",
                        sizeof(fcall), 0, 2, (char *)"********************************",
-                       (char *) "iSm", NULL, (SUBR) fcall_opcode, NULL);
+                       (char *) "iSM", NULL, (SUBR) fcall_opcode, NULL);
   csound->AppendOpcode(csound, (char *) "c_module_fcall",
                        sizeof(fcall), 0, 1, (char *)"********************************",
-                       (char *) "iSm", (SUBR) fcall_opcode, NULL, NULL);
+                       (char *) "iSM", (SUBR) fcall_opcode, NULL, NULL);
   csound->AppendOpcode(csound, (char *) "c_module_fcallk",
                        sizeof(fcall), 0, 2, (char *)"********************************",
-                       (char *) "iSm", NULL, (SUBR) fcall_opcode, NULL);
+                       (char *) "iSM", NULL, (SUBR) fcall_opcode, NULL);
+  csound->AppendOpcode(csound, (char *) "cxx_opcode_ik",
+                       sizeof(oobj), 0, 3, (char *)"********************************",
+                       (char *) "iSM", (SUBR) init_plugin_opcode,
+                       (SUBR) perf_plugin_opcode, NULL);
+  
   return OK;
 }
 
