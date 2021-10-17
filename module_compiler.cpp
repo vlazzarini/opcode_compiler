@@ -206,7 +206,7 @@ int module_compile(CSOUND *csound, dataspace *p) {
   *p->res = NOTOK;
   *p->handle = FL(0.0);
   llvm::ExitOnError &ExitOnErr = m->ExitOnErr;
-  csound->RegisterResetCallback(csound, p, (SUBR) module_deinit);
+  csound->RegisterDeinitCallback(csound, p, (SUBR) module_deinit);
   args.push_back("arg0");
   args.push_back(srcpath);
   
@@ -308,9 +308,7 @@ int module_compile(CSOUND *csound, dataspace *p) {
             LoadLibraryPermanently(lib);
     }
             
-    if(!m->jit){
-      m->jit = ExitOnErr(llvm::orc::JIT::Create());
-    }
+    m->jit = ExitOnErr(llvm::orc::JIT::Create());
     ExitOnErr(m->jit->addModule(llvm::orc::
                                 ThreadSafeModule(std::move(Module),
                                                  std::move(Ctx))));
@@ -321,11 +319,13 @@ int module_compile(CSOUND *csound, dataspace *p) {
         *p->res = (int) Main(csound);
         return OK;
       }
-  }
+  } else return NOTOK;
+  
   *p->res = 0;
   *p->handle = conv.fl;
   return OK;
 }
+
 #define MAXA 32
 struct fcall {
   OPDS h;
@@ -338,7 +338,7 @@ struct fcall {
 int fcall_opcode(CSOUND *csound, fcall *p) {
   fltptr conv;
   conv.fl = *p->handle;
-  auto m = conv.m; 
+  auto m = conv.m;
   auto funcxx = (int (*)(CSOUND *, const OPDS &, MYFLT*[], MYFLT*[]))
     m->ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
   auto func = (int (*)(CSOUND *, OPDS, MYFLT*[], MYFLT*[]))
@@ -360,7 +360,6 @@ int csoundModuleDestroy(CSOUND *csound) {
 }
 
 int csoundModuleInit(CSOUND *csound){
-  csound->Message(csound, "loading\n");
   csound->AppendOpcode(csound, (char *) "cxx_module_compile",
                        sizeof(dataspace), 0, 1, (char *)"ii",
                        (char *) "SW", (SUBR) module_compile, NULL, NULL);
@@ -379,7 +378,6 @@ int csoundModuleInit(CSOUND *csound){
   csound->AppendOpcode(csound, (char *) "c_module_fcallk",
                        sizeof(fcall), 0, 2, (char *)"********************************",
                        (char *) "iSm", NULL, (SUBR) fcall_opcode, NULL);
-  csound->Message(csound, "loaded\n");
   return OK;
 }
 
