@@ -3,7 +3,24 @@ Csound JIT Module Compilers
 
 This experimental opcode library builds on the initial work by Michael Goggins, and is based on the
 llvm/clang interpreter code provided in clang library sources. It includes opcodes for C/C++
-compilation to LLVM IR, as well as to execute compiled code. 
+compilation to LLVM IR, as well as to execute compiled code.
+
+
+Operation principles
+------------------
+
+The principle of operation of these opcodes is as follows:
+
+C/C++  -> LLVM bytecode -> execution
+
+Starting with a C or C++ source code, the compiler produces an LLVM
+bytecode that is stored in an execution object, the just-in-time (JIT)
+compiler, which can be run immediately or at a later
+time. Implementing this, separate opcodes are provided for compilaton
+and function calls.
+
+C/C++ compilation
+---------------
 
 The module compilers for C and C++ are
 
@@ -146,15 +163,15 @@ extern "C" int func(CSOUND *csound, const OPDS &h, MYFLT*out[], MYFLT *in[])
 may be invoked at a later time using 
 
 ```
-ir1[,ir2, ...]  c_module_fcall ihandle, Sfunc[,...]
-ir1[,ir2, ...]  cxx_module_fcall ihandle, Sfunc[,...] 
+ir1[,ir2, ...]  c_module_fcall ihandle, Sfunc[,...]  // C
+ir1[,ir2, ...]  cxx_module_fcall ihandle, Sfunc[,...]  // C++
 ```
 
 and/or
 
 ```
-xr1[,xr2, ...]  c_module_fcallk ihandle, Sfunc[,...]
-xr1[,xr2, ...]  cxx_module_fcallk ihandle, Sfunc[,...] 
+xr1[,xr2, ...]  c_module_fcallk ihandle, Sfunc[,...]  // C
+xr1[,xr2, ...]  cxx_module_fcallk ihandle, Sfunc[,...]  // C++
 ```
 
 These functions take a handle to a JIT compiler containing the code to be executed.
@@ -163,8 +180,11 @@ on every k-cycle, and the function name is passed as the string parameter `Sfunc
 The opcodes can use up to 32 outputs and 256 inputs whose types may be
 determined by the C or C++ code. These are available to the
 function as the `MYFLT *` arrays `out` and `in`.  The
-`jit_example.csd` and `jit_example_c++.csd` examples demonstrate
-the use of these functions.
+`jit_example.csd` demonstrates a C-language example in which one JIT
+compiler object is used to provide two separate functions that are
+invoked later at init and perf time. The `jit_example_c++.csd` example
+demonstrate two C++ compilers providing two separate JIT objects
+each one with a function that is called  at init and perf time,
 
 Building the opcodes
 ---------
