@@ -167,11 +167,23 @@ struct modulespace {
 struct dataspace {
   OPDS h;
   MYFLT *res;
+  MYFLT *handle;
   STRINGDAT *code;
   STRINGDAT *entry;
   STRINGDAT *cflags;
   STRINGDAT *dylibs;
+  modulespace *m;
 };
+
+union fltptr {
+  MYFLT fl;
+  modulespace *m;
+};
+
+int module_deinit(CSOUND *csound, dataspace *p) {
+  delete p->m;
+  return OK;
+}
 
 int module_compile(CSOUND *csound, dataspace *p) {
   char *code = p->code->data;
@@ -188,16 +200,13 @@ int module_compile(CSOUND *csound, dataspace *p) {
   std::fprintf(fp,"%s",code);
   std::fclose(fp);
   std::vector<const char*> args;
+  auto m = new modulespace;
+  fltptr conv;
+  conv.m = p->m = m;
   *p->res = NOTOK;
-  auto m =
-    *((modulespace **)csound->QueryGlobalVariable(csound,
-                                                  "::jit_module::"));
-  if(!m){
-    csound->InitError(csound, "could not get module dataspace\n");
-    return NOTOK;
-  }
-
+  *p->handle = FL(0.0);
   llvm::ExitOnError &ExitOnErr = m->ExitOnErr;
+  csound->RegisterResetCallback(csound, p, (SUBR) module_deinit);
   args.push_back("arg0");
   args.push_back(srcpath);
   
@@ -314,76 +323,63 @@ int module_compile(CSOUND *csound, dataspace *p) {
       }
   }
   *p->res = 0;
+  *p->handle = conv.fl;
   return OK;
 }
 #define MAXA 32
 struct fcall {
   OPDS h;
   MYFLT *out[MAXA];
+  MYFLT *handle;
   STRINGDAT *entry;
   MYFLT *in[VARGMAX];
 };
 
 int fcall_opcode(CSOUND *csound, fcall *p) {
-  auto m = *((modulespace **)
-             csound->QueryGlobalVariable(csound,"::jit_module::"));
+  fltptr conv;
+  conv.fl = *p->handle;
+  auto m = conv.m; 
   auto funcxx = (int (*)(CSOUND *, const OPDS &, MYFLT*[], MYFLT*[]))
     m->ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
   auto func = (int (*)(CSOUND *, OPDS, MYFLT*[], MYFLT*[]))
     m->ExitOnErr(m->jit->getSymbolAddress(p->entry->data));    
   if(((strcmp(p->h.optext->t.opcod, "c_module_fcall") == 0 || 
-       strcmp(p->h.optext->t.opcod, "c_module_fcall") == 0) ?
+       strcmp(p->h.optext->t.opcod, "c_module_fcallk") == 0) ?
       func(csound,p->h,p->out,p->in) :
       funcxx(csound,p->h,p->out,p->in)) == OK)
     return OK;
   else return NOTOK;
 }
 
-
-/* this creates the module dataspace object that holds the JIT*/
 int csoundModuleCreate(CSOUND *csound) {
-  if(csound->CreateGlobalVariable(csound,
-                                  "::jit_module::",
-                                  sizeof(modulespace*)) != 0){
-    csound->Message(csound, "error creating global var\n");
-    return NOTOK;
-  }
-  auto p = new modulespace;
-  auto pp = (modulespace **)
-    csound->QueryGlobalVariable(csound,"::jit_module::");                                
-  *pp = p;
   return OK;
-}  
+}
 
-/* this destroys the module dataspace object */
 int csoundModuleDestroy(CSOUND *csound) {
-  auto p = *((modulespace **)
-             csound->QueryGlobalVariable(csound,"::jit_module::"));  
-  delete p;
   return OK;
-}  
-
+}
 
 int csoundModuleInit(CSOUND *csound){
+  csound->Message(csound, "loading\n");
   csound->AppendOpcode(csound, (char *) "cxx_module_compile",
-                       sizeof(dataspace), 0, 1, (char *)"i",
+                       sizeof(dataspace), 0, 1, (char *)"ii",
                        (char *) "SW", (SUBR) module_compile, NULL, NULL);
   csound->AppendOpcode(csound, (char *) "c_module_compile",
-                       sizeof(dataspace), 0, 1, (char *)"i",
+                       sizeof(dataspace), 0, 1, (char *)"ii",
                        (char *) "SW", (SUBR) module_compile, NULL, NULL);
   csound->AppendOpcode(csound, (char *) "cxx_module_fcall",
                        sizeof(fcall), 0, 1, (char *)"********************************",
-                       (char *) "Sm", (SUBR) fcall_opcode, NULL, NULL);
+                       (char *) "iSm", (SUBR) fcall_opcode, NULL, NULL);
   csound->AppendOpcode(csound, (char *) "cxx_module_fcallk",
                        sizeof(fcall), 0, 2, (char *)"********************************",
-                       (char *) "Sm", NULL, (SUBR) fcall_opcode, NULL);
+                       (char *) "iSm", NULL, (SUBR) fcall_opcode, NULL);
   csound->AppendOpcode(csound, (char *) "c_module_fcall",
                        sizeof(fcall), 0, 1, (char *)"********************************",
-                       (char *) "Sm", (SUBR) fcall_opcode, NULL, NULL);
+                       (char *) "iSm", (SUBR) fcall_opcode, NULL, NULL);
   csound->AppendOpcode(csound, (char *) "c_module_fcallk",
                        sizeof(fcall), 0, 2, (char *)"********************************",
-                       (char *) "Sm", NULL, (SUBR) fcall_opcode, NULL);
-  
+                       (char *) "iSm", NULL, (SUBR) fcall_opcode, NULL);
+  csound->Message(csound, "loaded\n");
   return OK;
 }
 

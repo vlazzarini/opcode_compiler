@@ -2,14 +2,14 @@ Csound JIT Module Compilers
 ============
 
 This experimental opcode library builds on the initial work by Michael Goggins, and is based on the
-llvm/clang interpreter example code. It provides opcodes for C/C++
+llvm/clang interpreter code provided in clang library sources. It includes opcodes for C/C++
 compilation to LLVM IR, as well as to execute compiled code. 
 
 The module compilers for C and C++ are
 
 ```
-ires c_module_compile Scode[, Sentry, Scflags, Sdylibs]
-ires cxx_module_compile Scode[, Sentry, Scflags, Sdylibs]
+ires,ihandle c_module_compile Scode[, Sentry, Scflags, Sdylibs]
+ires,ihandle cxx_module_compile Scode[, Sentry, Scflags, Sdylibs]
 ```
 
 where `Scode` is a C or C++-language module containing the opcodes to be added to the system,
@@ -30,6 +30,15 @@ This function is executed at i-time immediately following any successful compila
 The remaining optional parameters can be used to pass any C++ flags to
 the compiler, and load any required dynamic libs.
 
+The opcodes return the result of the function execution (if this is
+executed) or zero on success, or a non-zero error as the first output.
+The second output is a handle to the JIT compiler that can be passed
+to other opcodes to execute code.
+
+It is possible to have more than one JIT compiler at the same time.
+Each instance of these opcodes creates a separate JIT object, that can
+be used as a separate module during performance.
+
 Example
 ------
 
@@ -39,7 +48,7 @@ code itself, it is only available to instruments in subsequent compilations.
 
 The orchestra code is composed of two opcode calls:
 
-- to `module_compile` adding the new opcode
+- to `c_module_compile` adding the new opcode
 - to `compilestr` compiling the Csound code that uses this opcode.
 
 New opcodes are added to the system using the Csound API function
@@ -92,7 +101,7 @@ SCode = {{
  }
  }}
 
-ires= c_module_compile(SCode, "module_init")
+ires,ihandle c_module_compile SCode, "module_init"
 ```
 
 This compiles the new opcode (`amp`) using the JIT compiler and executes the `module_init` function to add
@@ -110,7 +119,9 @@ SCscode = {{
 ires = compilestr(SCscode)
 ```
 
-A more elaborare C++ example is also found in the examples directory.
+A more elaborare C++ example is also found in the examples
+directory. In this particular use case, the handle provided by the
+compiler opcode is not employed elsewhere.
 
 Module function calls
 ------------------
@@ -135,21 +146,22 @@ extern "C" int func(CSOUND *csound, const OPDS &h, MYFLT*out[], MYFLT *in[])
 may be invoked at a later time using 
 
 ```
-ir1[,ir2, ...]  c_module_fcall Sfunc[,...]
-ir1[,ir2, ...]  cxx_module_fcall Sfunc[,...] 
+ir1[,ir2, ...]  c_module_fcall ihandle, Sfunc[,...]
+ir1[,ir2, ...]  cxx_module_fcall ihandle, Sfunc[,...] 
 ```
 
 and/or
 
 ```
-xr1[,xr2, ...]  c_module_fcallk Sfunc[,...]
-xr1[,xr2, ...]  cxx_module_fcallk Sfunc[,...] 
+xr1[,xr2, ...]  c_module_fcallk ihandle, Sfunc[,...]
+xr1[,xr2, ...]  cxx_module_fcallk ihandle, Sfunc[,...] 
 ```
 
+These functions take a handle to a JIT compiler containing the code to be executed.
 The former C or C++ code runs at i-time only and the latter is called at perf-time,
 on every k-cycle, and the function name is passed as the string parameter `Sfunc`.
-The opcodes can use up to 32 outputs and 256 inputs
-whose types may be determined by the C or C++ code. These are available to the
+The opcodes can use up to 32 outputs and 256 inputs whose types may be
+determined by the C or C++ code. These are available to the
 function as the `MYFLT *` arrays `out` and `in`.  The
 `jit_example.csd` and `jit_example_c++.csd` examples demonstrate
 the use of these functions.

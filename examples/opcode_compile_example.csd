@@ -50,8 +50,8 @@ SCscode = {{
 }}
 
 
-ires = c_module_compile(SCode, "module_init")
-ires = compilestr(SCscode)
+ires,ihandle c_module_compile SCode, "module_init"
+ires compilestr SCscode
 
 </CsInstruments>
 <CsScore>
