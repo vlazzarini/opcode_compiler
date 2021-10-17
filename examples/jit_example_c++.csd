@@ -18,7 +18,7 @@
  SCode2 = {{
   #include <csdl.h>
   extern "C" 
-   int funck(CSOUND *csound, const OPDS &h, MYFLT *out[], MYFLT *in[]) {
+   int func(CSOUND *csound, const OPDS &h, MYFLT *out[], MYFLT *in[]) {
      *out[0] =  *in[0];
      return OK;
    }
@@ -31,7 +31,7 @@ instr 1
  if gires == 0 then
   i1 cxx_module_fcall gihandle1,"func", 1
   print i1
-  k1 cxx_module_fcallk gihandle2,"funck", 1
+  k1 cxx_module_fcallk gihandle2,"func", 1
   printk2 k1
  endif 
 endin 
