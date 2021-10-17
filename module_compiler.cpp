@@ -353,7 +353,7 @@ int fcall_opcode(CSOUND *csound, fcall *p) {
   else return NOTOK;
 }
 
-
+/*
 #include "jitplugin.h"
 #include <cstdlib>
 
@@ -410,7 +410,7 @@ int perf_plugin_opcode(CSOUND *csound, oobj *p) {
   return OK;//opc->perf();
   } return NOTOK;
 }
-
+*/
 
 int csoundModuleCreate(CSOUND *csound) {
   return OK;
@@ -440,10 +440,10 @@ int csoundModuleInit(CSOUND *csound){
   csound->AppendOpcode(csound, (char *) "c_module_fcallk",
                        sizeof(fcall), 0, 2, (char *)"********************************",
                        (char *) "iSM", NULL, (SUBR) fcall_opcode, NULL);
-  csound->AppendOpcode(csound, (char *) "cxx_opcode_ik",
+  /*csound->AppendOpcode(csound, (char *) "cxx_opcode_ik",
                        sizeof(oobj), 0, 3, (char *)"********************************",
                        (char *) "iSM", (SUBR) init_plugin_opcode,
-                       (SUBR) perf_plugin_opcode, NULL);
+                       (SUBR) perf_plugin_opcode, NULL);*/
   
   return OK;
 }
