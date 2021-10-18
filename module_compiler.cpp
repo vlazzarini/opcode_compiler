@@ -353,8 +353,7 @@ int fcall_opcode(CSOUND *csound, fcall *p) {
   else return NOTOK;
 }
 
-/*
-#include "jitplugin.h"
+#include <jitplugin.h>
 #include <cstdlib>
 
 struct oobj {
@@ -363,14 +362,11 @@ struct oobj {
   MYFLT *handle;
   STRINGDAT *entry;
   MYFLT *in[VARGMAX];
-  std::shared_ptr<JITPlugin> dataspace;
+  BasePlugin *obj;
 };
 
-
 int deinit_plugin_opcode(CSOUND *csound, oobj *p) {
-  if(p->dataspace != nullptr) {
-    p->dataspace.reset();
-  }
+   delete p->obj;
    return OK;
 }
 
@@ -378,39 +374,30 @@ int instantiate_opcode(CSOUND *csound, oobj *p) {
   fltptr conv;
   conv.fl = *p->handle;
   auto m = conv.m;
-  auto funcxx = (JITPlugin* (*)(CSOUND *)) 
+  auto funcxx = (BasePlugin *(*)(OPDS))
     m->ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
-  auto ptr = funcxx(csound);
-  if (ptr != nullptr) {
-    //std::memcpy((void *)ptr, &(p->h), sizeof(OPDS)); 
-    p->dataspace.reset(ptr);
+  p->obj = funcxx(p->h);
+  if (p->obj != nullptr) {
+    p->obj->csound = csound;
+    p->obj->out = p->out;
+    p->obj->in = p->in;
     csound->RegisterDeinitCallback(csound,p,(SUBR) deinit_plugin_opcode);
     return OK;
    }
   return NOTOK;    
 }
 
-
 int init_plugin_opcode(CSOUND *csound, oobj *p) {
   if(instantiate_opcode(csound,p) == OK) { 
-  //MYFLT **iargs = opc->inargs.data();
-  //MYFLT **oargs = opc->outargs.data();
-  //std::memcpy(iargs,p->in, sizeof(MYFLT)*(p->INCOUNT-2));
-  //std::memcpy(oargs,p->out, sizeof(MYFLT)*(p->OUTCOUNT));
-  //opc->csound = (csnd::Csound *) csound;
-  csound->Message(csound, "before opc init\n");
-  return OK;//p->dataspace->ini();
+  return p->obj->init();
   } return NOTOK;
 }
 
 int perf_plugin_opcode(CSOUND *csound, oobj *p) {
-  if(p->dataspace != nullptr) {
-    // auto opc = p->dataspace;
-  //opc->nsmps_set();
-  return OK;//opc->perf();
+  if(p->obj != nullptr) {
+    return p->obj->perf();
   } return NOTOK;
 }
-*/
 
 int csoundModuleCreate(CSOUND *csound) {
   return OK;
@@ -440,10 +427,14 @@ int csoundModuleInit(CSOUND *csound){
   csound->AppendOpcode(csound, (char *) "c_module_fcallk",
                        sizeof(fcall), 0, 2, (char *)"********************************",
                        (char *) "iSM", NULL, (SUBR) fcall_opcode, NULL);
-  /*csound->AppendOpcode(csound, (char *) "cxx_opcode_ik",
+  csound->AppendOpcode(csound, (char *) "cxx_opcode_ik",
                        sizeof(oobj), 0, 3, (char *)"********************************",
                        (char *) "iSM", (SUBR) init_plugin_opcode,
-                       (SUBR) perf_plugin_opcode, NULL);*/
+                       (SUBR) perf_plugin_opcode, NULL);
+  csound->AppendOpcode(csound, (char *) "cxx_opcode_i",
+                       sizeof(oobj), 0, 1, (char *)"********************************",
+                       (char *) "iSM", (SUBR) init_plugin_opcode,
+                       NULL, NULL);
   
   return OK;
 }
