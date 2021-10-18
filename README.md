@@ -187,6 +187,57 @@ each one with a function that is called  at init and perf time.
 The `c++_oscil_example.csd` shows a simple sinusoidal oscillator
 written in C++ and implemented with these opcodes.
 
+C++ opcode objects
+----------
+
+In addition to function calls, it is possible to construct and run C++
+objects at i, k, or a rates (or a combination of these). For these,
+the code needs to provide a class implementing the opcode processing,
+and an entry function to instantiate objects of this class.
+
+The class should be derived from the `JITPlugin` base class provided
+by the `jitplugin.h` header file. The class should implement a
+constructor calling the base class constructor and passing the OPDS
+object to the base class constructor. It can then implement one or
+both of the processing methods called at init and perf time.
+
+```
+ struct OpcodeClass : JITPlugin {
+   OpcodeClass(OPDS h) : JITPlugin(h) {};  // constructor
+   int init()  { return OK; }  // called at init-time
+   int perf() { return OK; }   // called at perf time
+ };
+ ```
+
+The entry point function is then used to instantiate and return the
+class object in the following form
+
+```
+auto entry(OPDS h) {
+ return new OpcodeClass(h);
+}
+```
+
+Once the object is defined in the C++ code it can be run
+by passing the entry point name and the JIT handle to the appropriate
+`cxx_opcode_` opcode.
+
+```
+ires[,..]  cxx_opcode_i ihandle,Sentry[,...]  // i-time only
+ksig[,..]  cxx_opcode_k ihandle,Sentry[,...] // perf-time only ksig
+xsig[,..]  cxx_opcode_a ihandle,Sentry[,...] // perf-time only xsig
+k/ivar[,..]  cxx_opcode_ik ihandle,Sentry[,...] // i-time and perf-time i/kvars
+xvar[,..]  cxx_opcode_ia ihandle,Sentry[,...] // i-time and perf-time xvars
+```
+
+Supports for argument access etc are provide in a similar form to
+that in CPOF. However, since the code is running fully within a C++
+environment, classes can use the full range of supports from the
+C++ standard libraries and other APIs. Objects are automatically
+deleted at instrument deinit time, but any dynamically allocated
+resources should be disposed off in a class destructor. A simple
+example is given in the `opcode_class_c++.csd` code.
+
 Building the opcodes
 ---------
 

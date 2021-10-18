@@ -97,11 +97,19 @@ public:
 
 }
 
-
+/** Base class for JIT plugins
+ */
 struct BasePlugin : OPDS {
-   csnd::Args out;
-   csnd::Args in;
+   /** output arguments */
+   csnd::Args outargs;
+   /** input arguments */
+   csnd::Args inargs;
+   /** Csound engine */
    csnd::Csound *csound;
+   /** sample-accurate offset */
+   uint32_t offset;
+   /** vector samples to process */
+   uint32_t nsmps;
 
    BasePlugin(OPDS h) : OPDS(h) { };
    virtual ~BasePlugin() { };

@@ -233,7 +233,7 @@ int module_compile(CSOUND *csound, dataspace *p) {
   args.push_back("-I.");
   args.push_back("-fsyntax-only");
   args.push_back("-w");
-  args.push_back("-g");
+  args.push_back("-O3");
 
   if(p->INCOUNT > 2) 
     parse_str(p->cflags->data, args);
@@ -252,7 +252,7 @@ int module_compile(CSOUND *csound, dataspace *p) {
 #endif
 
   ExitOnErr.setBanner("Csound opcode compiler: ");
-  Driver TheDriver(llvm::sys::fs::getMainExecutable("csound",
+  Driver TheDriver(llvm::sys::fs::getMainExecutable("",
                                                     (void*)(intptr_t)
                                                     csoundModuleInfo),
                    T.str(), Diags);
@@ -260,12 +260,16 @@ int module_compile(CSOUND *csound, dataspace *p) {
   TheDriver.setCheckInputsExist(false);
 
   std::unique_ptr<Compilation> C(TheDriver.BuildCompilation(args));
-  if (!C) return NOTOK;
+  if (!C) {
+    csound->ErrorMsg(csound, "could not start compiler driver \n");
+    return NOTOK;
+  }
 
   const driver::JobList &Jobs = C->getJobs();
   const driver::Command &Cmd = cast<driver::Command>(*Jobs.begin());
   if (llvm::StringRef(Cmd.getCreator().getName()) != "clang") {
     Diags.Report(diag::err_fe_expected_clang_command);
+    csound->ErrorMsg(csound, "could not get driver command\n");
     return NOTOK;
   }
 
@@ -280,7 +284,10 @@ int module_compile(CSOUND *csound, dataspace *p) {
 
   // Create the compilers actual diagnostics engine.
   Clang.createDiagnostics();
-  if (!Clang.hasDiagnostics()) return NOTOK;
+  if (!Clang.hasDiagnostics()) {
+    csound->ErrorMsg(csound, "could not create diagnostics\n");
+    return NOTOK;
+  }
 
   // Infer the builtin include path if unspecified.
   if (Clang.getHeaderSearchOpts().UseBuiltinIncludes &&
@@ -292,15 +299,17 @@ int module_compile(CSOUND *csound, dataspace *p) {
 
   // Create and execute the frontend to generate an LLVM bitcode module.
   std::unique_ptr<CodeGenAction> Act(new EmitLLVMOnlyAction());
-  if (!Clang.ExecuteAction(*Act))
-    return 1;
+  if (!Clang.ExecuteAction(*Act)) {
+    csound->ErrorMsg(csound, "llvm bytecode not available\n");
+    return NOTOK;
+  }
 
   llvm::InitializeNativeTarget();
   llvm::InitializeNativeTargetAsmPrinter();
 
   std::unique_ptr<llvm::LLVMContext> Ctx(Act->takeLLVMContext());
   std::unique_ptr<llvm::Module> Module = Act->takeModule();
-  
+
   if (Module){
     if(p->INCOUNT > 3){
       std::vector<const char*> libs;  
@@ -309,7 +318,7 @@ int module_compile(CSOUND *csound, dataspace *p) {
           llvm::sys::DynamicLibrary::
             LoadLibraryPermanently(lib);
     }
-            
+
     m->jit = ExitOnErr(llvm::orc::JIT::Create());
     ExitOnErr(m->jit->addModule(llvm::orc::
                                 ThreadSafeModule(std::move(Module),
@@ -322,7 +331,10 @@ int module_compile(CSOUND *csound, dataspace *p) {
         *p->res = (int) Main(csound);
         return OK;
       }
-  } else return NOTOK;
+  } else {
+    csound->ErrorMsg(csound, "JIT module not ready\n");
+    return NOTOK;
+  }
   
   *p->res = 0;
   return OK;
@@ -379,10 +391,12 @@ int instantiate_opcode(CSOUND *csound, oobj *p) {
   p->obj = funcxx(p->h);
   if (p->obj != nullptr) {
     p->obj->csound = (csnd::Csound *) csound;
-    p->obj->out.set(p->out);
-    p->obj->out.size(p->OUTCOUNT);
-    p->obj->in.set(p->in);
-    p->obj->in.size(p->INCOUNT-1);
+    p->obj->outargs.set(p->out);
+    p->obj->outargs.size(p->OUTCOUNT);
+    p->obj->inargs.set(p->in);
+    p->obj->inargs.size(p->INCOUNT-1);
+    p->obj->nsmps = CS_KSMPS;
+    p->obj->offset = p->h.insdshead->ksmps_offset;
     csound->RegisterDeinitCallback(csound,p,(SUBR) deinit_plugin_opcode);
     return OK;
    }
@@ -391,22 +405,43 @@ int instantiate_opcode(CSOUND *csound, oobj *p) {
 
 int init_plugin_opcode(CSOUND *csound, oobj *p) {
   if(instantiate_opcode(csound,p) == OK) { 
-  return p->obj->init();
+    return p->obj->init();
   } return NOTOK;
 }
 
-int perf_plugin_opcode(CSOUND *csound, oobj *p) {
+int perfk_plugin_opcode(CSOUND *csound, oobj *p) {
   if(p->obj != nullptr) {
     return p->obj->perf();
   } return NOTOK;
 }
 
+int perfa_plugin_opcode(CSOUND *csound, oobj *p) {
+  if(p->obj != nullptr) {
+    csnd::Csound *cs = (csnd::Csound *) csound;
+    auto &outargs = p->obj->outargs;
+    uint32_t early = p->h.insdshead->ksmps_no_end;
+    uint32_t nsmps = p->obj->nsmps = p->h.insdshead->ksmps - early;
+    uint32_t offset = p->obj->offset = p->h.insdshead->ksmps_offset;
+    if (UNLIKELY(offset || early))
+      for (auto &arg : outargs) {
+        if (cs->is_asig(arg)) {
+          std::fill(arg, arg + offset, 0);
+          std::fill(arg + nsmps, arg + nsmps + early, 0);
+        }
+      }
+    return p->obj->perf();
+  } return NOTOK;
+}
+
+
 int csoundModuleCreate(CSOUND *csound) {
+  csound->Message(csound, "creating clang/llvm plugin lib\n");
   return OK;
 }
 
 int csoundModuleDestroy(CSOUND *csound) {
-  llvm::llvm_shutdown();
+  //llvm::llvm_shutdown();
+  csound->Message(csound, "closing clang/llvm plugin lib\n");
   return OK;
 }
 
@@ -419,25 +454,36 @@ int csoundModuleInit(CSOUND *csound){
                        (char *) "SW", (SUBR) module_compile, NULL, NULL);
   csound->AppendOpcode(csound, (char *) "cxx_module_fcall",
                        sizeof(fcall), 0, 1, (char *)"********************************",
-                       (char *) "iSM", (SUBR) fcall_opcode, NULL, NULL);
+                       (char *) "iSm", (SUBR) fcall_opcode, NULL, NULL);
   csound->AppendOpcode(csound, (char *) "cxx_module_fcallk",
                        sizeof(fcall), 0, 2, (char *)"********************************",
                        (char *) "iSM", NULL, (SUBR) fcall_opcode, NULL);
   csound->AppendOpcode(csound, (char *) "c_module_fcall",
                        sizeof(fcall), 0, 1, (char *)"********************************",
-                       (char *) "iSM", (SUBR) fcall_opcode, NULL, NULL);
+                       (char *) "iSm", (SUBR) fcall_opcode, NULL, NULL);
   csound->AppendOpcode(csound, (char *) "c_module_fcallk",
                        sizeof(fcall), 0, 2, (char *)"********************************",
                        (char *) "iSM", NULL, (SUBR) fcall_opcode, NULL);
   csound->AppendOpcode(csound, (char *) "cxx_opcode_ik",
                        sizeof(oobj), 0, 3, (char *)"********************************",
                        (char *) "iSM", (SUBR) init_plugin_opcode,
-                       (SUBR) perf_plugin_opcode, NULL);
+                       (SUBR) perfk_plugin_opcode, NULL);
+  csound->AppendOpcode(csound, (char *) "cxx_opcode_ia",
+                       sizeof(oobj), 0, 3, (char *)"********************************",
+                       (char *) "iSM", (SUBR) init_plugin_opcode,
+                       (SUBR) perfa_plugin_opcode, NULL);
   csound->AppendOpcode(csound, (char *) "cxx_opcode_i",
                        sizeof(oobj), 0, 1, (char *)"********************************",
-                       (char *) "iSM", (SUBR) init_plugin_opcode,
+                       (char *) "iSm", (SUBR) init_plugin_opcode,
                        NULL, NULL);
-  
+  csound->AppendOpcode(csound, (char *) "cxx_opcode_k",
+                       sizeof(oobj), 0, 3, (char *)"********************************",
+                       (char *) "iSM", (SUBR) instantiate_opcode,
+                       (SUBR) perfk_plugin_opcode, NULL);
+  csound->AppendOpcode(csound, (char *) "cxx_opcode_a",
+                       sizeof(oobj), 0, 3, (char *)"********************************",
+                       (char *) "iSM", (SUBR) instantiate_opcode,
+                       (SUBR) perfa_plugin_opcode, NULL);
   return OK;
 }
 
