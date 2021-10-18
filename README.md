@@ -236,7 +236,9 @@ environment, classes can use the full range of supports from the
 C++ standard libraries and other APIs. Objects are automatically
 deleted at instrument deinit time, but any dynamically allocated
 resources should be disposed off in a class destructor. A simple
-example is given in the `opcode_class_c++.csd` code.
+example is given in the `opcode_class_c++.csd` code, and a
+version of the C++ opcode example using an opcode object is
+given in `delay_example.csd`.
 
 Building the opcodes
 ---------
