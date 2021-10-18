@@ -156,7 +156,7 @@ A C function with the signature
 or a C++ function with the signature
 
 ```
-extern "C" int func(CSOUND *csound, const OPDS &h, MYFLT*out[], MYFLT *in[])
+extern "C" int func(CSOUND *csound, const OPDS &h, MYFLT *out[], MYFLT *in[])
 ```
 
 may be invoked at a later time using 
