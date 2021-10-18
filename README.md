@@ -10,10 +10,10 @@ Operation principles
 
 The principle of operation of these opcodes is as follows:
 
-C/C++  -> LLVM bytecode -> execution
+C/C++  -> LLVM bitcode -> execution
 
 Starting with a C or C++ source code, the compiler produces an LLVM
-bytecode that is stored in an execution object, the just-in-time (JIT)
+bitcode that is stored in an execution object, the just-in-time (JIT)
 compiler, which can be run immediately or at a later
 time. Implementing this, separate opcodes are provided for compilaton
 and function calls.
