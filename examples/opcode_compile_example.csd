@@ -43,25 +43,11 @@ SCode = {{
 
 ksmps = 64
 SCscode = {{
-
-    opcode Amp,a,ak
-      a1,k1 xin
-      a2 = a1*k1
-      xout a2
-    endop
-
     instr 1
      a1 oscili 0dbfs,A4
      a2 amp a1,0.5
      out a2
     endin
-
-     instr 2
-     a1 oscili 0dbfs,A4
-     a2 Amp a1,0.1
-     out a2
-    endin
-
 }}
 
 
@@ -75,20 +61,4 @@ endif
 i1 0 5
 </CsScore>
 </CsoundSynthesizer>
-<bsbPanel>
- <label>Widgets</label>
- <objectName/>
- <x>100</x>
- <y>100</y>
- <width>320</width>
- <height>240</height>
- <visible>true</visible>
- <uuid/>
- <bgcolor mode="nobackground">
-  <r>255</r>
-  <g>255</g>
-  <b>255</b>
- </bgcolor>
-</bsbPanel>
-<bsbPresets>
-</bsbPresets>
+
