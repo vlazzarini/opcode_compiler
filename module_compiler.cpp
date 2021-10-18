@@ -378,9 +378,11 @@ int instantiate_opcode(CSOUND *csound, oobj *p) {
     m->ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
   p->obj = funcxx(p->h);
   if (p->obj != nullptr) {
-    p->obj->csound = csound;
-    p->obj->out = p->out;
-    p->obj->in = p->in;
+    p->obj->csound = (csnd::Csound *) csound;
+    p->obj->out.set(p->out);
+    p->obj->out.size(p->OUTCOUNT);
+    p->obj->in.set(p->in);
+    p->obj->in.size(p->INCOUNT-1);
     csound->RegisterDeinitCallback(csound,p,(SUBR) deinit_plugin_opcode);
     return OK;
    }
