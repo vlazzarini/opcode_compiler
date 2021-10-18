@@ -223,11 +223,11 @@ by passing the entry point name and the JIT handle to the appropriate
 `cxx_opcode_` opcode.
 
 ```
-ires[,..]      cxx_opcode_i ihandle,Sentry[,...]  // i-time only
-ksig[,..]     cxx_opcode_k ihandle,Sentry[,...] // perf-time only ksig
-xsig[,..]     cxx_opcode_a ihandle,Sentry[,...] // perf-time only xsig
-k/ivar[,..]  cxx_opcode_ik ihandle,Sentry[,...] // i-time and perf-time i/kvars
-xvar[,..]     cxx_opcode_ia ihandle,Sentry[,...] // i-time and perf-time xvars
+ires[,..] cxx_opcode_i ihandle,Sentry[,...]  // i-time only
+ksig[,..] cxx_opcode_k ihandle,Sentry[,...] // perf-time only ksig
+xsig[,..] cxx_opcode_a ihandle,Sentry[,...] // perf-time only xsig
+k/ivar[,..] cxx_opcode_ik ihandle,Sentry[,...] // i-time and perf-time i/kvars
+xvar[,..] cxx_opcode_ia ihandle,Sentry[,...] // i-time and perf-time xvars
 ```
 
 Supports for argument access etc are provide in a similar form to
