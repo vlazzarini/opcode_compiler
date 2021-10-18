@@ -230,7 +230,7 @@ k/ivar[,..] cxx_opcode_ik ihandle,Sentry[,...] // i-time and perf-time i/kvars
 xvar[,..] cxx_opcode_ia ihandle,Sentry[,...] // i-time and perf-time xvars
 ```
 
-Supports for argument access etc are provide in a similar form to
+Supports for argument access etc are provided in a similar form to
 that in CPOF. However, since the code is running fully within a C++
 environment, classes can use the full range of supports from the
 C++ standard libraries and other APIs. Objects are automatically
