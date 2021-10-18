@@ -184,7 +184,7 @@ compiler object is used to provide two separate functions that are
 invoked later at init and perf time. The `jit_example_c++.csd` example
 demonstrate two C++ compilers providing two separate JIT objects
 each one with a function that is called  at init and perf time.
-The `c++_oscil_example.csd` shows a simple sinusoidal oscillator
+The `oscil_example.csd` shows a simple sinusoidal oscillator
 written in C++ and implemented with these opcodes.
 
 C++ opcode objects
