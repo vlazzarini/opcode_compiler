@@ -202,8 +202,8 @@ object to the base class constructor. It can then implement one or
 both of the processing methods called at init and perf time.
 
 ```
- struct OpcodeClass : JITPlugin {
-   OpcodeClass(OPDS h) : JITPlugin(h) {};  // constructor
+ struct OpcodeObj : JITPlugin {
+   OpcodeObj(OPDS h) : JITPlugin(h) {};  // constructor
    int init()  { return OK; }  // called at init-time
    int perf() { return OK; }   // called at perf time
  };
@@ -214,7 +214,7 @@ class object in the following form
 
 ```
 auto entry(OPDS h) {
- return new OpcodeClass(h);
+ return new OpcodeObj(h);
 }
 ```
 
