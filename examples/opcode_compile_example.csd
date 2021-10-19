@@ -51,7 +51,7 @@ SCscode = {{
 }}
 
 
-ires,ihandle c_module_compile SCode, "module_init"
+ires,ihandle c_module_compile SCode, "module_init", "-v"
 if ires == 0 then
  ires compilestr SCscode
 endif

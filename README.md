@@ -198,7 +198,7 @@ and an entry function to instantiate objects of this class.
 The class should be derived from the `JITPlugin` base class provided
 by the `jitplugin.h` header file. The class should implement a
 constructor calling the base class constructor and passing the OPDS
-object to the base class constructor. It can then implement one or
+object to it. It can then implement one or
 both of the processing methods called at init and perf time.
 
 ```
