@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8.12)
 
 project(opcode-compiler)
 
+
+
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(CMAKE_COMPILER_IS_CLANG 1)
 endif()
@@ -14,6 +16,7 @@ endif()
 set(APIVERSION "6.0")
 
 set(CMAKE_MACOSX_RPATH 1)
+set(CMAKE_INSTALL_RPATH "$ENV{HOME}/lib;/usr/local/lib")
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
 "${CMAKE_SOURCE_DIR}/cmake/Modules/")
@@ -286,6 +289,7 @@ separate_arguments(CLANG_DEFINITIONS_LIST NATIVE_COMMAND ${CLANG_DEFINITIONS})
 add_definitions(${CLANG_DEFINITIONS_LIST})
 
 link_directories("/usr/local/lib")
+link_directories("$ENV{HOME}/lib")
 find_program(LLVMCONFIG llvm-config HINTS /usr/bin /usr/local/bin /usr/local/opt/llvm/bin)
 make_plugin(module_compiler module_compiler.cpp)
 target_include_directories(module_compiler PRIVATE
