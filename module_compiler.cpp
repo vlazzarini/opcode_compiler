@@ -299,7 +299,7 @@ int module_compile(CSOUND *csound, dataspace *p) {
   // Create and execute the frontend to generate an LLVM bitcode module.
   std::unique_ptr<CodeGenAction> Act(new EmitLLVMOnlyAction());
   if (!Clang.ExecuteAction(*Act)) {
-    csound->ErrorMsg(csound, "llvm bytecode not available\n");
+    csound->ErrorMsg(csound, "llvm bitcode not available\n");
     return NOTOK;
   }
 
@@ -349,6 +349,10 @@ struct fcall {
 };
 
 int fcall_opcode(CSOUND *csound, fcall *p) {
+  if(*p->handle == 0){
+    csound->Message(csound, "invalid handle\n");
+    return NOTOK;
+}
   fltptr conv;
   conv.fl = *p->handle;
   auto m = conv.m;
@@ -382,6 +386,7 @@ int deinit_plugin_opcode(CSOUND *csound, oobj *p) {
 }
 
 int instantiate_opcode(CSOUND *csound, oobj *p) {
+  if(*p->handle != 0) {
   fltptr conv;
   conv.fl = *p->handle;
   auto m = conv.m;
@@ -399,7 +404,8 @@ int instantiate_opcode(CSOUND *csound, oobj *p) {
     csound->RegisterDeinitCallback(csound,p,(SUBR) deinit_plugin_opcode);
     return OK;
    }
-  return NOTOK;    
+    return NOTOK;
+  } else return csound->InitError(csound, "invalid handle\n");
 }
 
 int init_plugin_opcode(CSOUND *csound, oobj *p) {
