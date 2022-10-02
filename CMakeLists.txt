@@ -301,6 +301,6 @@ llvm_libs)
 exec_program(${LLVMCONFIG} ARGS --system-libs OUTPUT_VARIABLE
 llvm_sys_libs)
 
-set(clang_libs "-rpath /usr/lib -rpath $ENV{HOME}/lib -L$ENV{HOME}/lib -lclangTooling -lclangSupport -lclangFrontendTool -lclangFrontend -lclangDriver -lclangSerialization -lclangCodeGen -lclangParse -lclangSema -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCheckers -lclangStaticAnalyzerCore -lclangAnalysis -lclangARCMigrate -lclangRewrite -lclangRewriteFrontend -lclangEdit -lclangAST -lclangASTMatchers -lclangLex -lclangBasic -lclang")
+set(clang_libs "-rpath /usr/lib -rpath /usr/local/lib  -rpath $ENV{HOME}/lib -L$ENV{HOME}/lib -lclangTooling -lclangSupport -lclangFrontendTool -lclangFrontend -lclangDriver -lclangSerialization -lclangCodeGen -lclangParse -lclangSema -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCheckers -lclangStaticAnalyzerCore -lclangAnalysis -lclangARCMigrate -lclangRewrite -lclangRewriteFrontend -lclangEdit -lclangAST -lclangASTMatchers -lclangLex -lclangBasic -lclang")
 target_link_libraries(module_compiler ${clang_libs} ${llvm_sys_libs}  ${llvm_libs})
 target_compile_options(module_compiler PRIVATE "-std=c++17")
