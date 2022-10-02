@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8.12)
 
 project(opcode-compiler)
 
+
+
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(CMAKE_COMPILER_IS_CLANG 1)
 endif()
@@ -285,6 +287,7 @@ separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 add_definitions(${LLVM_DEFINITIONS_LIST})
 separate_arguments(CLANG_DEFINITIONS_LIST NATIVE_COMMAND ${CLANG_DEFINITIONS})
 add_definitions(${CLANG_DEFINITIONS_LIST})
+
 
 find_program(LLVMCONFIG llvm-config HINTS $ENV{HOME}/bin)
 make_plugin(module_compiler module_compiler.cpp)

@@ -7,7 +7,6 @@
 
  SCode = {{
   #include <csdl.h>
-  
     int func(CSOUND *csound, OPDS h, MYFLT *out[], MYFLT *in[]) {
      csound->Message(csound, "there are %d inputs and %d outputs\\n", INCOUNT-2, OUTCOUNT);
      *out[0] =  *in[0];
