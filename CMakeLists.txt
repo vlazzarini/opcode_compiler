@@ -13,10 +13,11 @@ endif()
 
 set(APIVERSION "6.0")
 
-set(CMAKE_MACOSX_RPATH 1)
+set(CMAKE_SKIP_RPATH TRUE)
+set(CMAKE_SKIP_BUIILD_RPATH TRUE)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-"${CMAKE_SOURCE_DIR}/cmake/Modules/")
+"${CMAKE_SOURCE_DIR}/cmake/Modules/" "$ENV{HOME}/lib/cmake/llvm")
 
 find_package(CSOUND)
 if(NOT CSOUND_INCLUDE_DIRS)
@@ -285,8 +286,7 @@ add_definitions(${LLVM_DEFINITIONS_LIST})
 separate_arguments(CLANG_DEFINITIONS_LIST NATIVE_COMMAND ${CLANG_DEFINITIONS})
 add_definitions(${CLANG_DEFINITIONS_LIST})
 
-link_directories("/usr/local/lib")
-find_program(LLVMCONFIG llvm-config HINTS /usr/bin /usr/local/bin /usr/local/opt/llvm/bin)
+find_program(LLVMCONFIG llvm-config HINTS $ENV{HOME}/bin)
 make_plugin(module_compiler module_compiler.cpp)
 target_include_directories(module_compiler PRIVATE
 ${CSOUND_INCLUDE_DIRS})
@@ -298,6 +298,6 @@ llvm_libs)
 exec_program(${LLVMCONFIG} ARGS --system-libs OUTPUT_VARIABLE
 llvm_sys_libs)
 
-set(clang_libs "-lclangTooling -lclangFrontendTool -lclangFrontend -lclangDriver -lclangSerialization -lclangCodeGen -lclangParse -lclangSema -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCheckers -lclangStaticAnalyzerCore -lclangAnalysis -lclangARCMigrate -lclangRewrite -lclangRewriteFrontend -lclangEdit -lclangAST -lclangASTMatchers -lclangLex -lclangBasic -lclang")
+set(clang_libs "-rpath /usr/lib -rpath $ENV{HOME}/lib -L$ENV{HOME}/lib -lclangTooling -lclangSupport -lclangFrontendTool -lclangFrontend -lclangDriver -lclangSerialization -lclangCodeGen -lclangParse -lclangSema -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCheckers -lclangStaticAnalyzerCore -lclangAnalysis -lclangARCMigrate -lclangRewrite -lclangRewriteFrontend -lclangEdit -lclangAST -lclangASTMatchers -lclangLex -lclangBasic -lclang")
 target_link_libraries(module_compiler ${clang_libs} ${llvm_sys_libs}  ${llvm_libs})
 target_compile_options(module_compiler PRIVATE "-std=c++17")
