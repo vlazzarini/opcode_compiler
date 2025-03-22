@@ -6,7 +6,7 @@
   This plugin library is free software; you can redistribute it
   and/or modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
-  version 2.1 of the License, or (at your option) any later version.
+  version 2.1 of the License, or (at your option) any later veCOUrsion.
 
   This software is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -50,6 +50,7 @@
 #include <unistd.h>
 #include <csdl.h>
 #include <vector>
+#include <cstdlib>
 
 using namespace clang;
 using namespace clang::driver;
@@ -206,15 +207,20 @@ int module_compile(CSOUND *csound, dataspace *p) {
   *p->res = NOTOK;
   *p->handle = FL(0.0);
   llvm::ExitOnError &ExitOnErr = m->ExitOnErr;
-  csound->RegisterDeinitCallback(csound, p, (SUBR) module_deinit);
   args.push_back("arg0");
   args.push_back(srcpath);
   
+  
   // MACOS defs
-#ifdef __APPLE__   
+#ifdef __APPLE__
+  char csfmk[128];
+  char *home = getenv("HOME");
+  snprintf(csfmk,128,"-I%s/Library/Frameworks/CsoundLib64.framework/Headers", home);
+  
   args.push_back("-DTARGET_OS_OSX");
   args.push_back("-DTARGET_OS_IPHONE");
-  args.push_back("-I/Library/Frameworks/CsoundLib64.framework/Headers/");
+  args.push_back(csfmk);
+  args.push_back("-I/Library/Frameworks/CsoundLib64.framework/Headers");  
   args.push_back("-I/Applications/Xcode.app/Contents/Developer"
                  "/Platforms/MacOSX.platform/Developer/SDKs"
                  "/MacOSX.sdk/usr/include/c++/v1");
@@ -234,7 +240,7 @@ int module_compile(CSOUND *csound, dataspace *p) {
   args.push_back("-w");
   args.push_back("-O3");
 
-  if(p->INCOUNT > 2) 
+  if(p->INOCOUNT > 2) 
     parse_str(p->cflags->data, args);
    
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
@@ -310,7 +316,7 @@ int module_compile(CSOUND *csound, dataspace *p) {
   std::unique_ptr<llvm::Module> Module = Act->takeModule();
 
   if (Module){
-    if(p->INCOUNT > 3){
+    if(p->INOCOUNT > 3){
       std::vector<const char*> libs;  
       parse_str(p->dylibs->data, libs);
       for (auto lib : libs) 
@@ -323,7 +329,7 @@ int module_compile(CSOUND *csound, dataspace *p) {
                                 ThreadSafeModule(std::move(Module),
                                                  std::move(Ctx))));
     *p->handle = conv.fl;
-    if(p->INCOUNT > 1) 
+    if(p->INOCOUNT > 1) 
       if(std::strcmp(p->entry->data,"")) {
         auto Main = (int (*)(CSOUND *))
           ExitOnErr(m->jit->getSymbolAddress(p->entry->data));
@@ -396,12 +402,11 @@ int instantiate_opcode(CSOUND *csound, oobj *p) {
   if (p->obj != nullptr) {
     p->obj->csound = (csnd::Csound *) csound;
     p->obj->outargs.set(p->out);
-    p->obj->outargs.size(p->OUTCOUNT);
+    p->obj->outargs.size(p->OUTOCOUNT);
     p->obj->inargs.set(p->in);
-    p->obj->inargs.size(p->INCOUNT-1);
+    p->obj->inargs.size(p->INOCOUNT-1);
     p->obj->nsmps = CS_KSMPS;
     p->obj->offset = p->h.insdshead->ksmps_offset;
-    csound->RegisterDeinitCallback(csound,p,(SUBR) deinit_plugin_opcode);
     return OK;
    }
     return NOTOK;
@@ -452,47 +457,47 @@ int csoundModuleDestroy(CSOUND *csound) {
 
 int csoundModuleInit(CSOUND *csound){
   csound->AppendOpcode(csound, (char *) "cxx_module_compile",
-                       sizeof(dataspace), 0, 1, (char *)"ii",
-                       (char *) "SW", (SUBR) module_compile, NULL, NULL);
+                       sizeof(dataspace), 0, (char *)"ii",
+                       (char *) "SW", (SUBR) module_compile, NULL, (SUBR) module_deinit);
   csound->AppendOpcode(csound, (char *) "c_module_compile",
-                       sizeof(dataspace), 0, 1, (char *)"ii",
-                       (char *) "SW", (SUBR) module_compile, NULL, NULL);
+                       sizeof(dataspace), 0,  (char *)"ii",
+                       (char *) "SW", (SUBR) module_compile, NULL,(SUBR) module_deinit);
   csound->AppendOpcode(csound, (char *) "cxx_module_fcall",
-                       sizeof(fcall), 0, 1, (char *)"********************************",
+                       sizeof(fcall), 0,  (char *)"********************************",
                        (char *) "iSm", (SUBR) fcall_opcode, NULL, NULL);
   csound->AppendOpcode(csound, (char *) "cxx_module_fcallk",
-                       sizeof(fcall), 0, 2, (char *)"********************************",
+                       sizeof(fcall), 0, (char *)"********************************",
                        (char *) "iSM", NULL, (SUBR) fcall_opcode, NULL);
   csound->AppendOpcode(csound, (char *) "c_module_fcall",
-                       sizeof(fcall), 0, 1, (char *)"********************************",
+                       sizeof(fcall), 0, (char *)"********************************",
                        (char *) "iSm", (SUBR) fcall_opcode, NULL, NULL);
   csound->AppendOpcode(csound, (char *) "c_module_fcallk",
-                       sizeof(fcall), 0, 2, (char *)"********************************",
+                       sizeof(fcall), 0, (char *)"********************************",
                        (char *) "iSM", NULL, (SUBR) fcall_opcode, NULL);
   csound->AppendOpcode(csound, (char *) "cxx_opcode_ik",
-                       sizeof(oobj), 0, 3, (char *)"********************************",
+                       sizeof(oobj), 0,  (char *)"********************************",
                        (char *) "iSM", (SUBR) init_plugin_opcode,
-                       (SUBR) perfk_plugin_opcode, NULL);
+                       (SUBR) perfk_plugin_opcode, (SUBR) deinit_plugin_opcode);
   csound->AppendOpcode(csound, (char *) "cxx_opcode_ia",
-                       sizeof(oobj), 0, 3, (char *)"********************************",
+                       sizeof(oobj), 0, (char *)"********************************",
                        (char *) "iSM", (SUBR) init_plugin_opcode,
-                       (SUBR) perfa_plugin_opcode, NULL);
+                       (SUBR) perfa_plugin_opcode,  (SUBR) deinit_plugin_opcode);
   csound->AppendOpcode(csound, (char *) "cxx_opcode_i",
-                       sizeof(oobj), 0, 1, (char *)"********************************",
+                       sizeof(oobj), 0,  (char *)"********************************",
                        (char *) "iSm", (SUBR) init_plugin_opcode,
-                       NULL, NULL);
+                       NULL, (SUBR) deinit_plugin_opcode);
   csound->AppendOpcode(csound, (char *) "cxx_opcode_k",
-                       sizeof(oobj), 0, 3, (char *)"********************************",
+                       sizeof(oobj), 0, (char *)"********************************",
                        (char *) "iSM", (SUBR) instantiate_opcode,
-                       (SUBR) perfk_plugin_opcode, NULL);
+                       (SUBR) perfk_plugin_opcode, (SUBR) deinit_plugin_opcode);
   csound->AppendOpcode(csound, (char *) "cxx_opcode_a",
-                       sizeof(oobj), 0, 3, (char *)"********************************",
+                       sizeof(oobj), 0,  (char *)"********************************",
                        (char *) "iSM", (SUBR) instantiate_opcode,
-                       (SUBR) perfa_plugin_opcode, NULL);
+                       (SUBR) perfa_plugin_opcode, (SUBR) deinit_plugin_opcode);
   return OK;
 }
 
 int csoundModuleInfo(void){
-  return ((CS_APIVERSION << 16) + (CS_APISUBVER << 8) + (int) sizeof(MYFLT));
+  return ((CS_VERSION << 16) + (CS_SUBVER << 8) + (int) sizeof(MYFLT));
 }
   
