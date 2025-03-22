@@ -35,7 +35,7 @@ SCode = {{
  }
 
  int module_init(CSOUND *csound) { 
-    csound->AppendOpcode(csound, "amp",sizeof(DATASPACE),0,3,"a","ak",
+    csound->AppendOpcode(csound, "amp",sizeof(DATASPACE),0, "a","ak",
                          (SUBR) init, (SUBR) perf, NULL);                     
     return 0;
  };

@@ -1,13 +1,15 @@
 <CsoundSynthesizer>
 <CsOptions>
--odac 
+-odac --opcode-lib=./libmodule_compiler.dylib 
 </CsOptions>
 <CsInstruments>
 
 0dbfs = 1
 SCode = {{
+  #include <cstdint>
   #include <csdl.h>
   #include <cmath>
+  #include <cstdio>
 
   struct Oscil {
      double ph;
@@ -30,7 +32,7 @@ SCode = {{
 
   extern "C" {
     int init(CSOUND *csound, const OPDS &h, MYFLT *out[], MYFLT *in[]) {
-     auto o = new Oscil(0., csound->GetSr(csound));
+     auto o = new Oscil(0., h.insdshead->esr);
      flptr cvt;
      cvt.ptr = o;
      *out[0] = cvt.fl;
@@ -68,7 +70,6 @@ SCode = {{
   }
  }}
 
-
  gires, gihandle cxx_module_compile SCode
 
 instr 1
@@ -81,12 +82,15 @@ instr 1
    k1 cxx_module_fcallk gihandle,"deinit",iosc
   endif
   out linen(a1,0.1,p3,0.1)
+ else
+  prints "failed to compile\n";
  endif
+ 
 endin 
 
 </CsInstruments>
 <CsScore>
 i1 0 2 0.2 440
-i1 0 2 0.1 660
+;i1 0 2 0.1 660
 </CsScore>
 </CsoundSynthesizer>

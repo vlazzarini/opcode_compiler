@@ -18,7 +18,7 @@ SCode = {{
     if(inargs[1] > 10000)
       return csound->init_error("delay time too long\\n");
     
-    delay.allocate(csound, csound->sr() * inargs[2]);
+    delay.allocate(csound, sr() * inargs[2]);
     iter = delay.begin();
     return OK;
   }

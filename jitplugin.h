@@ -111,6 +111,8 @@ struct BasePlugin : OPDS {
    /** vector samples to process */
    uint32_t nsmps;
 
+   MYFLT sr() { return insdshead->esr; }
+
    BasePlugin(OPDS h) : OPDS(h) { };
    virtual ~BasePlugin() { };
    virtual int init() = 0;

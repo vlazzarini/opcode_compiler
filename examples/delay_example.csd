@@ -1,6 +1,6 @@
 <CsoundSynthesizer>
 <CsOptions>
--n
+-n --opcode-lib=./libmodule_compiler.dylib 
 </CsOptions>
 <CsInstruments>
 0dbfs = 1
@@ -17,7 +17,7 @@ SCode = {{
    int init() {
     if(inargs[1] > 10000)
       return csound->init_error("delay time too long\\n");
-    delay.resize(csound->sr() * inargs[2]);
+    delay.resize(sr() * inargs[2]);
     iter = delay.begin();
     return OK;
   }
