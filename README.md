@@ -71,14 +71,14 @@ New C opcodes are added to the system using the Csound API function
 
 ```
 int csound::AppendOpcode(CSOUND *, const char *opname,
-                                int dsblksiz, int flags, int thread,
+                                int dsblksiz, int flags,
                                 const char *outypes, const char *intypes,
-                                int (*iopadr)(CSOUND *, void *),
-                                int (*kopadr)(CSOUND *, void *),
-                                int (*aopadr)(CSOUND *, void *));
+                                int (*init)(CSOUND *, void *),
+                                int (*perf)(CSOUND *, void *),
+                                int (*deinit)(CSOUND *, void *));
 ```
 
-The C code is given as a string to `opcode_compile` using the `{{ }}` multiline
+The C code is given as a string to `c_module_compile` using the `{{ }}` multiline
 string. Note that this requires any backslashes (`\`) found in the
 code to be escaped with another backslash (`\\`).
 
@@ -111,7 +111,7 @@ SCode = {{
  }
 
  int module_init(CSOUND *csound) {
-    csound->AppendOpcode(csound, "amp",sizeof(DATASPACE),0,3,"a","ak",
+    csound->AppendOpcode(csound, "amp",sizeof(DATASPACE),0,"a","ak",
                          (SUBR) init, (SUBR) perf, NULL);
     return 0;
  }
@@ -135,7 +135,7 @@ SCscode = {{
 ires = compilestr(SCscode)
 ```
 
-A more elaborare C++ example is also found in the examples
+A more elaborateo C++ example is also found in the examples
 directory. In this particular use case, the handle provided by the
 compiler opcode is not employed elsewhere.
 
@@ -263,3 +263,4 @@ make install
 
 Victor Lazzarini  
 October 2021
+Updated for Csound 7, March 2025
