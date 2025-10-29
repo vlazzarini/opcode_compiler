@@ -82,6 +82,7 @@ The C code is given as a string to `c_module_compile` using the `{{ }}` multilin
 string. Note that this requires any backslashes (`\`) found in the
 code to be escaped with another backslash (`\\`).
 
+{% raw %}
 ```
 SCode = {{
  #include <csdl.h>
@@ -119,10 +120,13 @@ SCode = {{
 
 ires,ihandle c_module_compile SCode, "module_init"
 ```
+{% endraw %}
+
 
 This compiles the new opcode (`amp`) using the JIT compiler and executes the `module_init` function to add
 the opcode to the Csound instance. Now we can use it in our Csound instruments.
 
+{% raw %}
 ```
 SCscode = {{
     instr 1
@@ -134,6 +138,7 @@ SCscode = {{
 
 ires = compilestr(SCscode)
 ```
+{% raw %}
 
 A more elaborateo C++ example is also found in the examples
 directory. In this particular use case, the handle provided by the
