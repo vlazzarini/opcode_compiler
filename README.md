@@ -138,7 +138,7 @@ SCscode = {{
 
 ires = compilestr(SCscode)
 ```
-{% raw %}
+{% endraw %}
 
 A more elaborateo C++ example is also found in the examples
 directory. In this particular use case, the handle provided by the
